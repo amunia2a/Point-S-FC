@@ -3246,7 +3246,21 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     if(noteField){
       try{noteField.value=localStorage.getItem(view.dataset.mcfNoteKey)||'';}catch(e){noteField.value='';}
       var savedPreview=view.querySelector('.mcf-saved-note');
-      if(savedPreview)showSavedNote(noteField.value.trim());
+      if(savedPreview){
+        savedPreview.replaceChildren();
+        var savedText=noteField.value.trim();
+        if(savedText){
+          var noteIcon=document.createElement('span');
+          noteIcon.className='mcf-note-symbol';
+          noteIcon.setAttribute('aria-hidden','true');
+          noteIcon.textContent='✎';
+          var noteContent=document.createElement('span');
+          noteContent.className='mcf-note-preview-text';
+          noteContent.textContent=savedText;
+          savedPreview.append(noteIcon,noteContent);
+        }
+        savedPreview.hidden=!savedText;
+      }
       var counter=view.querySelector('#mcfNoteCount');
       if(counter)counter.textContent=noteField.value.length+'/500';
       var msg=view.querySelector('#mcfNoteFeedback');if(msg)msg.textContent='';
