@@ -3128,21 +3128,26 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     var tabs=document.createElement('div');
     tabs.className='mcf-client-tabs';
     tabs.innerHTML=
-      '<button type="button" class="active" data-mcf-tab="infos">Infos</button>'+
-      '<button type="button" data-mcf-tab="fidelite">Fidélité</button>'+
+      '<button type="button" class="active" data-mcf-tab="fidelite">Fidélité</button>'+
+      '<button type="button" data-mcf-tab="infos">Informations</button>'+
       '<button type="button" data-mcf-tab="historique">Historique</button>';
 
     var pInfo=document.createElement('section');
-    pInfo.className='mcf-client-panel active'; pInfo.dataset.mcfPanel='infos';
+    pInfo.className='mcf-client-panel'; pInfo.dataset.mcfPanel='infos';
     var pFid=document.createElement('section');
-    pFid.className='mcf-client-panel'; pFid.dataset.mcfPanel='fidelite';
+    pFid.className='mcf-client-panel active'; pFid.dataset.mcfPanel='fidelite';
     var pHist=document.createElement('section');
     pHist.className='mcf-client-panel'; pHist.dataset.mcfPanel='historique';
 
-    profile.after(tabs);
-    tabs.after(pInfo,pFid,pHist);
+    var shell=document.createElement('section');
+    shell.className='mcf-fidelity-shell';
+    profile.after(shell);
+    shell.append(tabs,pInfo,pFid,pHist);
     pInfo.append(infoTitle,info);
-    pFid.append(actions);
+    var fidelityHeading=document.createElement('div');
+    fidelityHeading.className='mcf-fidelity-intro';
+    fidelityHeading.innerHTML='<h2>Gérer la fidélité</h2><p>Ajoutez des points ou attribuez une récompense à ce client.</p>';
+    pFid.append(fidelityHeading,actions);
     if(historyHead) pHist.append(historyHead);
     pHist.append(history);
 
@@ -3195,7 +3200,7 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
 
     document.getElementById('merchantMode')?.classList.add('mcf-minimal-open');
     merchantView('clientdetail');
-    var first=view.querySelector('[data-mcf-tab="infos"]');
+    var first=view.querySelector('[data-mcf-tab="fidelite"]');
     if(first) first.click();
   };
 
@@ -4462,4 +4467,45 @@ window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.
 new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mount();load()}}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="mcf-approved-card-layout-20261020">
+/* Desktop client card: identity left, two small statistic cards right */
+#merchantMode #mc-clientdetail .mcf-profile{display:grid!important;grid-template-columns:minmax(0,1.3fr) minmax(0,1.7fr)!important;align-items:center!important;gap:20px!important;padding:20px!important;border-radius:23px!important}
+#merchantMode #mc-clientdetail .mcf-idrow{min-width:0!important}
+#merchantMode #mc-clientdetail .mcf-rule{display:none!important}
+#merchantMode #mc-clientdetail .mcf-stats{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:12px!important;padding:0!important}
+#merchantMode #mc-clientdetail .mcf-divider{display:none!important}
+#merchantMode #mc-clientdetail .mcf-stat{min-width:0!important;justify-content:flex-start!important;gap:12px!important;padding:16px 13px!important;border-radius:17px!important}
+#merchantMode #mc-clientdetail .mcf-points{background:linear-gradient(120deg,#eef6ff,#e6f2ff)!important}
+#merchantMode #mc-clientdetail .mcf-rewards{background:linear-gradient(120deg,#f0fbf4,#e5f9ec)!important}
+#merchantMode #mc-clientdetail .mcf-stat-icon{width:45px!important;height:45px!important;flex:0 0 45px!important;background:#fff!important}
+#merchantMode #mc-clientdetail .mcf-stat-icon svg{width:25px!important;height:25px!important}
+#merchantMode #mc-clientdetail .mcf-stat small{font-size:11px!important;color:#5b7190!important}
+#merchantMode #mc-clientdetail .mcf-stat b{font-size:25px!important;color:#149a4c!important}
+#merchantMode #mc-clientdetail .mcf-rewards b{font-size:16px!important;color:#143f7b!important}
+#merchantMode #mc-clientdetail .mcf-fidelity-shell{background:#fff;border:1px solid #e0eaf7;border-radius:23px;margin-top:14px;padding:0 20px 22px;box-shadow:0 8px 26px #174b8009}
+#merchantMode #mc-clientdetail .mcf-client-tabs{margin:0!important;padding-top:6px!important}
+#merchantMode #mc-clientdetail .mcf-client-tabs button{padding:17px 4px 15px!important;font-size:13px!important}
+#merchantMode #mc-clientdetail .mcf-client-tabs button.active:after{left:8%!important;right:8%!important;height:4px!important;background:#0868c8!important}
+#merchantMode #mc-clientdetail .mcf-client-panel{padding-top:22px!important}
+#merchantMode #mc-clientdetail .mcf-fidelity-intro h2{font-size:20px;color:#143f7b;margin:0 0 5px;font-weight:900}
+#merchantMode #mc-clientdetail .mcf-fidelity-intro p{color:#75859d;font-size:13px;margin:0 0 18px}
+#merchantMode #mc-clientdetail .mcf-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px!important}
+#merchantMode #mc-clientdetail .mcf-action{min-height:105px!important;border-radius:18px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:10px!important;font-size:14px!important}
+#merchantMode #mc-clientdetail .mcf-action svg{width:31px!important;height:31px!important}
+#merchantMode #mc-clientdetail .mcf-action.mcf-add{background:#effbf3!important}
+#merchantMode #mc-clientdetail .mcf-action.mcf-gift{background:#edf5ff!important}
+@media(max-width:760px){
+ #merchantMode #mc-clientdetail .mcf-profile{grid-template-columns:1fr!important;gap:15px!important;padding:16px!important}
+ #merchantMode #mc-clientdetail .mcf-stats{gap:8px!important}
+ #merchantMode #mc-clientdetail .mcf-stat{padding:12px 8px!important;gap:7px!important}
+ #merchantMode #mc-clientdetail .mcf-stat-icon{width:34px!important;height:34px!important;flex-basis:34px!important}
+ #merchantMode #mc-clientdetail .mcf-stat-icon svg{width:19px!important;height:19px!important}
+ #merchantMode #mc-clientdetail .mcf-stat b{font-size:19px!important}
+ #merchantMode #mc-clientdetail .mcf-rewards b{font-size:12px!important}
+ #merchantMode #mc-clientdetail .mcf-fidelity-shell{padding:0 12px 16px}
+ #merchantMode #mc-clientdetail .mcf-actions{gap:8px!important}
+ #merchantMode #mc-clientdetail .mcf-action{font-size:11px!important;min-height:92px!important;padding:10px!important}
+}
+</style>
 </body></html>
