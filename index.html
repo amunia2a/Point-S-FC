@@ -3162,11 +3162,27 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     noteBox.className='mcf-client-note';
     noteBox.innerHTML='<label for="mcfClientNote">Note client</label><textarea id="mcfClientNote" maxlength="500" rows="4" placeholder="Ajouter une note sur ce client..."></textarea><div class="mcf-note-footer"><small id="mcfNoteCount">0/500</small><button type="button" id="mcfNoteSave">Enregistrer</button></div><small id="mcfNoteFeedback" aria-live="polite"></small>';
     infoColumns.append(noteBox);
+    /* Saved note preview directly below the VIP/customer status. */
+    var identityNote=document.createElement('div');
+    identityNote.className='mcf-saved-note';
+    identityNote.hidden=true;
+    var identityForNote=view.querySelector('.mcf-identity');
+    if(identityForNote) identityForNote.appendChild(identityNote);
+    function showSavedNote(value){
+      if(!identityNote) return;
+      identityNote.replaceChildren();
+      if(value){
+        var mark=document.createElement('span');mark.className='mcf-note-symbol';mark.setAttribute('aria-hidden','true');mark.textContent='✎';
+        var text=document.createElement('span');text.className='mcf-note-preview-text';text.textContent=value;
+        identityNote.append(mark,text);
+      }
+      identityNote.hidden=!value;
+    }
     var noteField=noteBox.querySelector('textarea');
     noteField.addEventListener('input',function(){noteBox.querySelector('#mcfNoteCount').textContent=noteField.value.length+'/500';noteBox.querySelector('#mcfNoteFeedback').textContent='';});
     noteBox.querySelector('#mcfNoteSave').addEventListener('click',function(){
       if(!view.dataset.mcfNoteKey) return;
-      try{localStorage.setItem(view.dataset.mcfNoteKey,noteField.value);noteBox.querySelector('#mcfNoteFeedback').textContent='Note enregistrée sur cet appareil.';}
+      try{localStorage.setItem(view.dataset.mcfNoteKey,noteField.value);showSavedNote(noteField.value.trim());noteBox.querySelector('#mcfNoteFeedback').textContent='Note enregistrée sur cet appareil.';}
       catch(e){noteBox.querySelector('#mcfNoteFeedback').textContent='Enregistrement local impossible.';}
     });
 
@@ -3229,6 +3245,8 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     var noteField=view.querySelector('#mcfClientNote');
     if(noteField){
       try{noteField.value=localStorage.getItem(view.dataset.mcfNoteKey)||'';}catch(e){noteField.value='';}
+      var savedPreview=view.querySelector('.mcf-saved-note');
+      if(savedPreview)showSavedNote(noteField.value.trim());
       var counter=view.querySelector('#mcfNoteCount');
       if(counter)counter.textContent=noteField.value.length+'/500';
       var msg=view.querySelector('#mcfNoteFeedback');if(msg)msg.textContent='';
@@ -4558,5 +4576,79 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
 #merchantMode #mc-clientdetail .mcf-note-footer small{font-size:11px;color:#788aa4}
 #merchantMode #mc-clientdetail .mcf-note-footer button{border:0;border-radius:10px;background:#1662b2;color:white;font-weight:750;padding:9px 13px;cursor:pointer}
 #merchantMode #mc-clientdetail #mcfNoteFeedback{display:block;font-size:11px;color:#64748b;margin-top:6px}
+</style>
+
+<style id="mcf-vip-note-placement-v1">
+/* Only placement adjustments requested: VIP next to name, saved note below. */
+#merchantMode #mc-clientdetail .mcf-identity{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  column-gap:9px!important;row-gap:5px!important;
+}
+#merchantMode #mc-clientdetail .mcf-identity>strong{
+  display:inline-block!important;white-space:normal!important;
+}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-active{
+  display:inline-flex!important;margin:0!important;flex-shrink:0!important;
+}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-phone-top{
+  flex-basis:100%!important;margin:0!important;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note{
+  flex-basis:100%;font-size:10.5px;line-height:1.45;color:#31557d;
+  background:#f3f7ff;border:1px solid #dce8f8;border-radius:9px;
+  padding:7px 10px;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note[hidden]{display:none!important}
+</style>
+
+<style id="mcf-note-vip-history-refinement-20261020">
+/* Only requested refinements: elegant saved note, inline VIP and uniform history icons. */
+#merchantMode #mc-clientdetail .mcf-identity>strong{order:1!important;flex:0 1 auto!important}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-active{order:2!important;margin:0!important;align-self:center!important}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-phone-top{order:3!important;flex:0 0 100%!important}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-saved-note{
+ order:4!important;display:flex;align-items:flex-start;gap:7px;
+ width:100%;max-width:360px;box-sizing:border-box;flex:0 1 100%!important;
+ padding:8px 10px!important;margin-top:4px!important;
+ border:1px solid #d9e9f9!important;border-left:3px solid #2780cb!important;
+ border-radius:10px!important;background:#f4f9ff!important;
+ color:#345879!important;font-size:11px!important;line-height:1.45!important;
+ box-shadow:0 2px 7px rgba(21,83,145,.035);
+}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-saved-note[hidden]{display:none!important}
+#merchantMode #mc-clientdetail .mcf-note-symbol{color:#1767ba;font-size:15px;line-height:1;flex:0 0 14px}
+#merchantMode #mc-clientdetail .mcf-note-preview-text{min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+/* Unified dimensions for old and new history renderers; never alter history data. */
+#merchantMode #mc-clientdetail #mcHistory .mc-history,
+#merchantMode #mc-clientdetail #mcHistory .mcf-history-row{
+ display:grid!important;grid-template-columns:44px minmax(0,1fr) auto!important;
+ align-items:center!important;gap:13px!important;min-height:72px!important;
+ padding:12px 13px!important;box-sizing:border-box!important;
+ border-bottom:1px solid #e5ecf5!important;
+}
+#merchantMode #mc-clientdetail #mcHistory .mc-history:last-child,
+#merchantMode #mc-clientdetail #mcHistory .mcf-history-row:last-child{border-bottom:0!important}
+#merchantMode #mc-clientdetail #mcHistory .mcf-hicon,
+#merchantMode #mc-clientdetail #mcHistory .mc-hicon,
+#merchantMode #mc-clientdetail #mcHistory .mc-history>span:first-child:not(.mc-history-date){
+ width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+ max-width:38px!important;max-height:38px!important;
+ padding:0!important;margin:0!important;box-sizing:border-box!important;
+ border-radius:50%!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;line-height:1!important;flex:0 0 38px!important;
+}
+#merchantMode #mc-clientdetail #mcHistory .mcf-hicon svg,
+#merchantMode #mc-clientdetail #mcHistory .mc-hicon svg,
+#merchantMode #mc-clientdetail #mcHistory .mc-history>span:first-child svg{
+ display:block!important;width:21px!important;height:21px!important;
+ min-width:21px!important;max-width:21px!important;min-height:21px!important;max-height:21px!important;
+ margin:0 auto!important;transform:none!important;stroke-width:1.9!important;
+}
+#merchantMode #mc-clientdetail #mcHistory .mc-history p{margin:0!important;min-width:0}
+#merchantMode #mc-clientdetail #mcHistory .mc-history time{justify-self:end;text-align:right!important}
+@media(max-width:650px){
+ #merchantMode #mc-clientdetail #mcHistory .mc-history{grid-template-columns:38px minmax(0,1fr) auto!important;gap:9px!important;padding:11px 6px!important}
+ #merchantMode #mc-clientdetail .mcf-identity>.mcf-saved-note{max-width:100%}
+}
 </style>
 </body></html>
