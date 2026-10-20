@@ -4784,7 +4784,7 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
 }
 </style>
 <style id="ps-client-four-tabs-style">
-#merchantMode #mc-clientdetail .mcf-client-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:0!important;gap:2px}
+#merchantMode #mc-clientdetail .mcf-client-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;margin:0!important;gap:2px}
 #merchantMode #mc-clientdetail .mcf-client-tabs button{font-size:clamp(9px,2.4vw,12px)!important;padding:14px 3px!important;cursor:pointer}
 #merchantMode #mc-clientdetail .mcf-fidelity-shell{background:#fff;border:1px solid #e0eafa;border-radius:20px;padding:12px;box-shadow:0 6px 20px #154a7909;margin-top:14px}
 #merchantMode #mc-clientdetail .mcf-client-panel{padding-top:15px}
@@ -4810,6 +4810,12 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
 #merchantMode #mc-clientdetail .ps-note-card small{display:block;color:#8293a8;margin-bottom:6px}
 #merchantMode #mc-clientdetail .ps-notes-layout textarea{width:100%;box-sizing:border-box;min-height:115px;border:1px solid #cbd9eb;border-radius:10px;padding:10px;font:inherit}
 @media(max-width:650px){#merchantMode #mc-clientdetail .ps-edit-grid,#merchantMode #mc-clientdetail .ps-notes-layout{grid-template-columns:1fr}}
+#merchantMode #mc-clientdetail .mcf-profile .ps-profile-actions{margin:14px 0 0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#merchantMode #mc-clientdetail .mcf-profile .ps-profile-actions .mcf-action{min-height:84px!important}
+#merchantMode #mc-clientdetail .mcf-fidelity-intro{display:none!important}
+#merchantMode #mc-clientdetail .ps-preview-grid{margin-bottom:15px}
+#merchantMode #mc-clientdetail .ps-readonly-value,#merchantMode #mc-clientdetail .ps-readonly-phone{font-size:13px;font-weight:700;color:#174580}
+@media(max-width:650px){#merchantMode #mc-clientdetail .mcf-profile .ps-profile-actions{grid-template-columns:1fr!important}}
 </style>
 <script id="ps-client-four-tabs-script">
 (function(){'use strict';
@@ -4821,18 +4827,22 @@ async function api(path,opts={}){if(!token)throw Error('Connexion commerçant re
 function field(label,id,value='',editable=true,wide=false){return '<div class="ps-edit-field '+(wide?'wide':'')+'"><div class="ps-edit-row"><label for="'+id+'">'+escape(label)+'</label>'+(editable?'<button type="button" data-edit="'+id+'" title="Modifier '+escape(label)+'" aria-label="Modifier '+escape(label)+'">✎</button>':'')+'</div><input id="'+id+'" value="'+escape(value)+'" '+(editable?'disabled':'disabled')+'></div>'}
 function prepare(){const v=view();if(!v||!v.dataset.minimalReady)return;const tabs=v.querySelector('.mcf-client-tabs');if(!tabs||tabs.dataset.psFour)return;
 const info=tabs.querySelector('[data-mcf-tab="infos"]'),fid=tabs.querySelector('[data-mcf-tab="fidelite"]'),hist=tabs.querySelector('[data-mcf-tab="historique"]');
-if(!info||!fid||!hist)return;info.textContent='Informations client';hist.textContent='Historique';tabs.replaceChildren(info,fid);
+if(!info||!fid||!hist)return;info.textContent='Informations client';hist.textContent='Historique';tabs.replaceChildren(info);
+const actions=v.querySelector('.mcf-actions');const stats=v.querySelector('.mcf-stats')||v.querySelector('.mcf-idrow');const profile=v.querySelector('.mcf-profile');if(actions&&profile){profile.appendChild(actions);actions.classList.add('ps-profile-actions')}const fidelityPanel=v.querySelector('[data-mcf-panel="fidelite"]');if(fidelityPanel)fidelityPanel.remove();
 const noteTab=document.createElement('button');noteTab.type='button';noteTab.dataset.mcfTab='notes';noteTab.textContent='Notes client';tabs.append(noteTab,hist);
-const notes=document.createElement('section');notes.className='mcf-client-panel';notes.dataset.mcfPanel='notes';notes.innerHTML='<div class="ps-notes-layout"><div><h3>Notes enregistrées</h3><div id="psClientNotesList"></div></div><div><h3>Nouvelle note</h3><textarea id="psClientNoteInput" maxlength="500" placeholder="Écrire une note client..."></textarea><div class="ps-edit-row"><small id="psClientNoteCount">0/500</small><button type="button" class="ps-note-save" id="psClientNoteSave">Enregistrer</button></div><p class="ps-edit-muted">Notes stockées sur cet appareil uniquement.</p></div></div>';
+const notes=document.createElement('section');notes.className='mcf-client-panel';notes.dataset.mcfPanel='notes';notes.innerHTML='<div class="ps-notes-layout"><div><h3>Notes enregistrées</h3><div id="psClientNotesList"></div></div><div><h3>Nouvelle note</h3><textarea id="psClientNoteInput" maxlength="500" placeholder="Écrire une note client..."></textarea><div class="ps-edit-row"><small id="psClientNoteCount">0/500</small><button type="button" class="ps-note-save" id="psClientNoteSave">Enregistrer</button></div><p class="ps-edit-muted">Notes enregistrées sur cet appareil uniquement (non synchronisées).</p></div></div>';
 v.querySelector('[data-mcf-panel="historique"]').before(notes);
-const panel=v.querySelector('[data-mcf-panel="infos"]');panel.innerHTML='<h3 class="mcf-heading">Informations client</h3><p class="ps-edit-muted" id="psClientDataNotice">Sélectionnez une fiche réelle pour modifier ses informations Supabase.</p><div id="psClientEditArea"></div>';
+const panel=v.querySelector('[data-mcf-panel="infos"]');panel.innerHTML='<h3 class="mcf-heading">Informations client</h3><p class="ps-edit-muted" id="psClientDataNotice">Les informations visibles proviennent de la liste clients. Les modifications sécurisées nécessitent un client Supabase identifié.</p><div id="psClientEditArea"></div>';
 notes.querySelector('#psClientNoteInput').addEventListener('input',e=>notes.querySelector('#psClientNoteCount').textContent=e.target.value.length+'/500');
 notes.querySelector('#psClientNoteSave').onclick=()=>{const text=notes.querySelector('#psClientNoteInput').value.trim();if(!text||!selected)return;const key='pointsf-client-notes-v2:'+selected;let all=[];try{all=JSON.parse(localStorage.getItem(key)||'[]')}catch(_){}all.unshift({text,date:new Date().toLocaleString('fr-FR')});localStorage.setItem(key,JSON.stringify(all));notes.querySelector('#psClientNoteInput').value='';notes.querySelector('#psClientNoteCount').textContent='0/500';renderNotes()};
 tabs.dataset.psFour='1';info.click();}
 function renderNotes(){const v=view();if(!v)return;let all=[];try{all=JSON.parse(localStorage.getItem('pointsf-client-notes-v2:'+selected)||'[]')}catch(_){}const old=localStorage.getItem(v.dataset.mcfNoteKey||'');if(old&&!all.length)all=[{text:old,date:'Note précédente'}];v.querySelector('#psClientNotesList').innerHTML=all.length?all.map(n=>'<div class="ps-note-card"><small>'+escape(n.date)+'</small>'+escape(n.text)+'</div>').join(''):'<p class="ps-edit-muted">Aucune note enregistrée.</p>'}
 function status(t){const e=view()?.querySelector('#psClientEditStatus');if(e)e.textContent=t}
 function renderClient(){const area=view()?.querySelector('#psClientEditArea');if(!area)return;
-if(!client){area.innerHTML='<div class="ps-edit-field"><label>Code client Supabase</label><input id="psClientCode" placeholder="Code client réel (pas une fiche démo)"><div class="ps-edit-actions"><button type="button" id="psClientLoad">Charger le client</button></div><p class="ps-edit-muted">Les cartes de démonstration ne sont pas liées automatiquement aux enregistrements Supabase. Saisissez le code d’un client réel pour accéder à sa fiche.</p><p id="psClientEditStatus" class="ps-edit-status"></p></div>';area.querySelector('#psClientLoad').onclick=loadClient;return}
+if(!client){area.innerHTML='<div class="ps-edit-field"><label>Code client Supabase</label><input id="psClientCode" placeholder="Code client réel (pas une fiche démo)"><div class="ps-edit-actions"><button type="button" id="psClientLoad">Charger le client</button></div><p class="ps-edit-muted">Les cartes de démonstration ne sont pas liées automatiquement aux enregistrements Supabase. Saisissez le code d’un client réel pour accéder à sa fiche.</p><p id="psClientEditStatus" class="ps-edit-status"></p></div>';area.querySelector('#psClientLoad').onclick=loadClient;
+const v=view(), displayedName=v?.querySelector('.mcf-identity strong')?.textContent||'', displayedPhone=v?.querySelector('.mcf-phone-top')?.textContent||'';
+const summary=document.createElement('div');summary.className='ps-edit-grid ps-preview-grid';summary.innerHTML='<div class="ps-edit-field"><label>Client sélectionné</label><div class="ps-readonly-value"></div></div><div class="ps-edit-field"><label>Téléphone</label><div class="ps-readonly-phone"></div></div><div class="ps-edit-field wide"><label>Adresse, e-mail, véhicules et informations complémentaires</label><div class="ps-edit-muted">À charger depuis Supabase pour éviter d’afficher des informations inventées.</div></div>';
+summary.querySelector('.ps-readonly-value').textContent=displayedName;summary.querySelector('.ps-readonly-phone').textContent=displayedPhone||'Non renseigné';area.prepend(summary);return}
 const c=client;
 area.innerHTML='<div class="ps-edit-grid">'+field('E-mail','psEmail',c.email||'',false)+field('Téléphone','psPhone',c.telephone)+field('Adresse','psAddress',c.adresse,true,true)+'<div class="ps-edit-field wide"><div class="ps-edit-row"><label for="psExtra">Informations complémentaires</label><button type="button" data-edit="psExtra" aria-label="Modifier les informations complémentaires">✎</button></div><textarea id="psExtra" maxlength="2000" disabled>'+escape(c.informations_complementaires)+'</textarea></div></div><div class="ps-edit-actions"><button class="secondary" type="button" id="psClientCancel">Annuler</button><button type="button" id="psClientSave">Enregistrer</button></div><h3 class="mcf-heading">Véhicules</h3><div id="psVehicleList"></div><p id="psClientEditStatus" class="ps-edit-status"></p>';
 area.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const input=area.querySelector('#'+b.dataset.edit);input.disabled=false;input.focus()});
@@ -4847,6 +4857,29 @@ async function loadClient(){const code=view()?.querySelector('#psClientCode')?.v
 window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;if(!token){client=null;vehicles=[]}});
 function wrap(){const old=window.merchantOpenClientMinimal;if(typeof old!=='function'||old.__psFour)return;const next=function(card){const r=old.apply(this,arguments);prepare();client=null;vehicles=[];selected=card.dataset.codeClient?'code:'+card.dataset.codeClient:(card.dataset.name||card.querySelector('.mcl-person b')?.textContent||'client');renderClient();renderNotes();view()?.querySelector('[data-mcf-tab="infos"]')?.click();return r};next.__psFour=true;window.merchantOpenClientMinimal=next}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wrap);else wrap();
+})();
+</script>
+<style id="ps-client-final-fixes">
+#merchantMode #mc-clientdetail .mcf-saved-note,#merchantMode #mc-clientdetail .mcf-client-note{display:none!important}
+#merchantMode #mc-clientdetail .mcf-profile .ps-profile-actions{margin-top:14px!important}
+#merchantMode #mc-clientdetail .ps-code-line{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:#24578a;font-weight:800}
+#merchantMode #mc-clientdetail .ps-code-line button{border:0;border-radius:7px;background:#e7f2ff;color:#14589a;padding:5px 9px;cursor:pointer}
+#merchantMode #mc-clientdetail .ps-edit-field input:disabled,#merchantMode #mc-clientdetail .ps-edit-field textarea:disabled{background:#f5f8fc;opacity:1}
+#merchantMode #mc-clientdetail .ps-edit-field .ps-edit-row button{font-size:15px}
+#merchantMode #mc-clientdetail .ps-client-warning{background:#fff7e9;border:1px solid #f0d7a3;border-radius:10px;padding:12px;color:#865d1b}
+</style>
+<script id="ps-client-final-fixes-script">
+(function(){'use strict';
+const SB='https://lsffbioatihkjtiutgma.supabase.co',KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+let token=null, rows=[],active=null;
+const $=id=>document.getElementById(id), view=()=>$('mc-clientdetail');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function req(path){if(!token)throw Error('Connexion requise');let r=await fetch(SB+path,{headers:{apikey:KEY,Authorization:'Bearer '+token}});let d=await r.json();if(!r.ok)throw Error(d.message||'Erreur de chargement');return d}
+function codeHeader(c){let id=view()?.querySelector('.mcf-identity');if(!id)return;let old=id.querySelector('.ps-code-line');old?.remove();let line=document.createElement('div');line.className='ps-code-line';let txt=document.createElement('span');txt.textContent='Code client : '+(c?.code_client||'Non attribué');line.append(txt);if(c?.code_client){let b=document.createElement('button');b.type='button';b.textContent='Copier';b.onclick=()=>{navigator.clipboard?.writeText(c.code_client).then(()=>{b.textContent='Copié ✓'}).catch(()=>{b.textContent='Sélectionnez le code'})};line.append(b)}id.append(line)}
+async function loadList(){if(!token)return;try{const city=$('mcGarage')?.value||'Ajaccio';const garages=await req('/rest/v1/garages?select=id,ville');const garage=garages.find(g=>(g.ville||'').toLowerCase()===city.toLowerCase());if(!garage)return;const accounts=await req('/rest/v1/comptes_fidelite?select=id,solde_points,clients(id,prenom,nom,email,telephone,adresse,informations_complementaires,code_client)&garage_id=eq.'+encodeURIComponent(garage.id)+'&limit=1000');rows=accounts.filter(a=>a.clients?.id);let list=$('mclList');if(!list)return;list.replaceChildren();if(!rows.length){list.textContent='Aucun client enregistré pour ce garage.';return}rows.forEach((a,i)=>{let c=a.clients,b=document.createElement('button');b.type='button';b.className='mcl-card';b.dataset.psRealClient=c.id;b.dataset.psIndex=String(i);b.dataset.name=[c.prenom,c.nom].filter(Boolean).join(' ');b.dataset.codeClient=c.code_client||'';b.dataset.status='all';b.innerHTML='<div class="mcl-head"><span class="mcl-person"><span class="mcl-user">👤</span><span><b>'+esc(b.dataset.name||'Client')+'</b><small>'+esc(c.telephone||'Téléphone non renseigné')+'</small></span></span><span class="mcl-badge">Compte actif</span></div><div class="mcl-meta"><span>Dernier passage <b>—</b></span><span>Solde <b>'+esc(a.solde_points??0)+' points</b></span></div>';b.onclick=()=>{active=c;window.merchantOpenClientMinimal(b);codeHeader(c);setTimeout(()=>{let field=view()?.querySelector('#psClientCode');if(field){field.value=c.code_client||'';let load=view()?.querySelector('#psClientLoad');if(load&&c.code_client)load.click()}},0)};list.append(b)})}catch(e){console.warn('Liste clients Supabase non disponible',e.message)}}
+window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;if(!token){rows=[];active=null;return}setTimeout(loadList,400)});
+document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'&&token)setTimeout(loadList,150)});
+// Do not modify login, MFA or reward handlers.
 })();
 </script>
 </body></html>
