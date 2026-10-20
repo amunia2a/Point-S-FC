@@ -4994,23 +4994,114 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #merchantMode #mc-clientdetail .ps-identity-reordered .ps-client-top-details{order:3!important}
 #merchantMode #mc-clientdetail .ps-identity-reordered .ps-code-line{order:4!important}
 </style>
-<script id="ps-client-header-details-script">
+
+<style id="ps-automatic-status-style">
+#merchantMode #mc-clientdetail .mcf-identity .ps-top-status{order:1!important;margin:1px 0 3px!important}
+#merchantMode #mc-clientdetail .mcf-identity .ps-top-status.vip{background:#fff0cb;color:#835400}
+#merchantMode #mc-clientdetail .mcf-identity .ps-top-status.fidele{background:#e6f6ed;color:#087b42}
+#merchantMode #mc-clientdetail .mcf-identity .ps-top-status.classique{background:#eaf2fb;color:#1b5791}
+#merchantMode #mc-clientdetail .mcf-identity .mcf-phone-top{order:2!important}
+#merchantMode #mc-clientdetail .mcf-identity .ps-client-top-details{order:3!important}
+#merchantMode #mc-clientdetail .mcf-identity .ps-code-line{order:4!important}
+</style>
+<script id="ps-automatic-status-script">
 (function(){'use strict';
+const SB='https://lsffbioatihkjtiutgma.supabase.co',KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+let token=null,selection=0,seen='',busy=false;
 const view=()=>document.getElementById('mc-clientdetail');
-let currentStatus='';
-function value(id){const el=view()?.querySelector('#'+id);if(!el)return '';return (el.value||'').trim()}
-function sync(){const v=view();if(!v||v.hidden)return;const identity=v.querySelector('.mcf-identity');if(!identity)return;
-let badge=identity.querySelector('.ps-top-status');if(!badge){badge=document.createElement('span');badge.className='ps-top-status';const name=identity.querySelector('strong');name?.insertAdjacentElement('afterend',badge)}
-const st=currentStatus.trim();badge.textContent=st?('Statut : '+st):'Statut : non renseigné';badge.classList.toggle('vip',/vip/i.test(st));
-let details=identity.querySelector('.ps-client-top-details');if(!details){details=document.createElement('div');details.className='ps-client-top-details';identity.append(details)}
-const address=value('psAddress');const vehicleEls=v.querySelectorAll('#psVehicleList .ps-vehicle');const veh=[];
-vehicleEls.forEach(el=>{const b=el.querySelector('input[id^="psVm"]')?.value||'',m=el.querySelector('input[id^="psVd"]')?.value||'',plate=el.querySelector('input[id^="psVi"]')?.value||'';const desc=[b,m].filter(Boolean).join(' ');if(desc||plate)veh.push([desc,plate].filter(Boolean).join(' · '))});
-const rows=[['Adresse',address||'Non renseignée'],['Véhicule',veh.length?veh.join(' / '):'Aucun véhicule enregistré']];
-rows.forEach(([label,val],i)=>{let r=details.children[i];if(!r){r=document.createElement('div');r.className='ps-top-row';details.append(r)}const txt=label+' : '+val;if(r.textContent!==txt)r.textContent=txt});
+function badge(){const id=view()?.querySelector('.mcf-identity');if(!id)return null;let b=id.querySelector('.ps-top-status');if(!b){b=document.createElement('span');b.className='ps-top-status';id.querySelector('strong')?.insertAdjacentElement('afterend',b)}return b}
+function setStatus(label,description){const b=badge();if(!b)return;b.textContent=label;b.title=description||'';b.classList.remove('vip','fidele','classique');if(label==='VIP')b.classList.add('vip');if(label==='Fidèle')b.classList.add('fidele');if(label==='Classique')b.classList.add('classique')}
+async function api(path){if(!token)throw Error('Session commerçant absente');const r=await fetch(SB+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+token,Accept:'application/json'}});const d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.message||'Erreur Supabase');return d}
+const num=v=>typeof v==='number'&&Number.isFinite(v)?v:(typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))?Number(v):null);
+function pointsEarned(row){const t=String(row.type_operation||row.type||'').toLowerCase();if(/recompense|utilis|depens|retrait|annul|rembours/.test(t))return 0;
+if(!/ajout|gain|credit|achat|passage|visite|point/.test(t))return 0;
+for(const k of ['points','nombre_points','montant_points','points_ajoutes','variation_points','delta_points','quantite_points','valeur_points']){const n=num(row[k]);if(n!==null)return Math.max(0,n)}return null}
+function isVisit(row){return /^(visite|passage|achat|prestation|intervention)$/.test(String(row.type_operation||row.type||'').toLowerCase())}
+async function calculate(id,run){const since=new Date();since.setFullYear(since.getFullYear()-1);const date=encodeURIComponent(since.toISOString());
+try{
+const city=document.getElementById('mcGarage')?.value||'Ajaccio';const garages=await api('garages?select=id,ville');const garage=garages.find(g=>String(g.ville||'').toLowerCase()===city.toLowerCase());if(!garage)throw Error('Garage introuvable');
+const ac=await api('comptes_fidelite?select=id&client_id=eq.'+encodeURIComponent(id)+'&garage_id=eq.'+encodeURIComponent(garage.id)+'&limit=1');if(!ac.length)throw Error('Compte fidélité introuvable');
+const ops=await api('operations_fidelite?select=*&compte_id=eq.'+encodeURIComponent(ac[0].id)+'&created_at=gte.'+date+'&order=created_at.desc&limit=1000');
+let total=0,pointsComplete=true;for(const op of ops){const n=pointsEarned(op);if(n===null){pointsComplete=false;break}total+=n}
+let visits=ops.filter(isVisit).length,visitsKnown=ops.some(isVisit);
+// Si les visites sont enregistrées dans une table dédiée, privilégier ce relevé réel.
+try{const v=await api('visites?select=id&client_id=eq.'+encodeURIComponent(id)+'&garage_id=eq.'+encodeURIComponent(garage.id)+'&created_at=gte.'+date+'&limit=1000');visits=v.length;visitsKnown=true}catch(_){/* La table visites peut ne pas exister ou ne pas être accessible. */}
+if(run!==selection||view()?.dataset.psSelectedClientId!==id)return;
+const vip=(pointsComplete&&total>=1000)||(visitsKnown&&visits>=10);
+const loyal=(pointsComplete&&total>=200)||(visitsKnown&&visits>=3);
+const fullyKnown=pointsComplete&&visitsKnown;
+const label=vip?'VIP':loyal?'Fidèle':fullyKnown?'Classique':'Statut à vérifier';
+setStatus(label,'12 derniers mois — points gagnés : '+(pointsComplete?total:'non disponibles')+' ; visites : '+(visitsKnown?visits:'non disponibles')+'.');
+}catch(e){if(run===selection)setStatus('Statut indisponible',e.message)}
 }
-document.addEventListener('click',e=>{const card=e.target.closest?.('#mclList .mcl-card, .mcl-card');if(card){const raw=card.dataset.status||card.querySelector('.mcl-vip,.vip,.mcl-status')?.textContent||'';currentStatus=/vip/i.test(raw)?'VIP':(/standard|classique|premium/i.test(raw)?raw.trim():'');setTimeout(sync,80);setTimeout(sync,600)}},true);
-const observer=new MutationObserver(()=>{if(observer._pending)return;observer._pending=true;requestAnimationFrame(()=>{observer._pending=false;sync()})});
-function start(){const v=view();if(!v)return;observer.observe(v,{childList:true,subtree:true});sync()}
+function value(id){return (view()?.querySelector('#'+id)?.value||'').trim()}
+function syncHeader(){const v=view();if(!v||v.hidden)return;const identity=v.querySelector('.mcf-identity');if(!identity)return;badge();let details=identity.querySelector('.ps-client-top-details');if(!details){details=document.createElement('div');details.className='ps-client-top-details';identity.append(details)}const address=value('psAddress');const veh=[];v.querySelectorAll('#psVehicleList .ps-vehicle').forEach(el=>{const b=el.querySelector('input[id^="psVm"]')?.value||'',m=el.querySelector('input[id^="psVd"]')?.value||'',p=el.querySelector('input[id^="psVi"]')?.value||'';if(b||m||p)veh.push([[b,m].filter(Boolean).join(' '),p].filter(Boolean).join(' · '))});[['Adresse',address||'Non renseignée'],['Véhicule',veh.length?veh.join(' / '):'Aucun véhicule enregistré']].forEach(([k,val],i)=>{let row=details.children[i];if(!row){row=document.createElement('div');row.className='ps-top-row';details.append(row)}const t=k+' : '+val;if(row.textContent!==t)row.textContent=t})}
+function check(){const v=view();if(!v||v.hidden)return;syncHeader();const id=v.dataset.psSelectedClientId||'';if(id===seen)return;seen=id;selection++;if(!id){setStatus('Statut à vérifier','Sélectionner un client Supabase');return}setStatus('Calcul du statut…','Lecture des données Supabase');calculate(id,selection)}
+window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;seen='';selection++;if(!token)setStatus('Statut à vérifier','Connexion commerçant requise')});
+document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'){seen='';selection++;queueMicrotask(check)}});
+function start(){const v=view();if(!v)return;const obs=new MutationObserver(()=>{if(busy)return;busy=true;requestAnimationFrame(()=>{busy=false;check()})});obs.observe(v,{subtree:true,childList:true,attributes:true,attributeFilter:['data-ps-selected-client-id']});check()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
+
+<style id="ps-header-order-20261020">
+#merchantMode #mc-clientdetail .mcf-identity{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-active{order:0!important;margin:0 0 2px!important;position:static!important}
+#merchantMode #mc-clientdetail .mcf-identity>.ps-name-status-row{order:1!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:8px!important;width:100%}
+#merchantMode #mc-clientdetail .ps-name-status-row>strong{display:inline!important;margin:0!important;white-space:normal!important}
+#merchantMode #mc-clientdetail .ps-name-status-row>.ps-top-status{order:initial!important;margin:0!important;display:inline-flex!important}
+#merchantMode #mc-clientdetail .mcf-identity>.ps-code-line{order:2!important;margin:0!important}
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-phone-top{order:3!important;margin:0!important}
+#merchantMode #mc-clientdetail .mcf-identity>.ps-client-top-details{order:4!important;margin:2px 0 0!important}
+</style>
+<script id="ps-header-order-script-20261020">
+(function(){'use strict';
+function align(){
+ const id=document.querySelector('#merchantMode #mc-clientdetail .mcf-identity');if(!id)return;
+ let name=id.querySelector(':scope > strong, :scope > .ps-name-status-row > strong');if(!name)return;
+ let row=id.querySelector(':scope > .ps-name-status-row');
+ if(!row){row=document.createElement('div');row.className='ps-name-status-row';name.before(row);row.append(name)}
+ let status=id.querySelector(':scope > .ps-top-status');if(status)row.append(status);
+ let active=id.querySelector(':scope > .mcf-active');if(active&&active.parentElement!==id)id.prepend(active);
+}
+let queued=false;function schedule(){if(queued)return;queued=true;queueMicrotask(()=>{queued=false;align()})}
+function start(){align();const detail=document.getElementById('mc-clientdetail');if(!detail)return;new MutationObserver(schedule).observe(detail,{childList:true,subtree:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
+<script id="ps-last-passage-operations-20261020">
+(function(){'use strict';
+const SB='https://lsffbioatihkjtiutgma.supabase.co';
+const KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+let token=null,seq=0,lastKey='',pending=false;
+const view=()=>document.getElementById('mc-clientdetail');
+const dateElement=()=>view()?.querySelector('.mcf-reward-count');
+async function get(path){const r=await fetch(SB+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+token,Accept:'application/json'}});const d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.message||'Supabase indisponible');return d;}
+function operationQualifies(op){const t=String(op.type_operation||op.type||op.nature||op.action||'').toLowerCase();
+  if(/annul|supprim|rembours|correction|ajustement/.test(t))return false;
+  return /point|ajout|credit|gain|attribut|recompens|cadeau|reward/.test(t);
+}
+function dateOf(op){const s=op.created_at||op.date_operation||op.date_attribution||op.date_creation||null;const d=s?new Date(s):null;return d&&Number.isFinite(d.getTime())?d:null;}
+async function refresh(){const v=view(),id=v?.dataset.psSelectedClientId,el=dateElement();if(!token||!id||!el||v.hidden)return;
+ const current=++seq;try{
+  const city=document.getElementById('mcGarage')?.value||'Ajaccio';
+  const garages=await get('garages?select=id,ville');
+  const garage=garages.find(g=>String(g.ville||'').toLowerCase()===city.toLowerCase());
+  if(!garage)throw Error('Garage introuvable');
+  const accounts=await get('comptes_fidelite?select=id&client_id=eq.'+encodeURIComponent(id)+'&garage_id=eq.'+encodeURIComponent(garage.id)+'&limit=1');
+  if(!accounts.length)throw Error('Compte introuvable');
+  const ops=await get('operations_fidelite?select=*&compte_id=eq.'+encodeURIComponent(accounts[0].id)+'&order=created_at.desc&limit=1000');
+  if(current!==seq||view()?.dataset.psSelectedClientId!==id)return;
+  const dates=ops.filter(operationQualifies).map(dateOf).filter(Boolean).sort((a,b)=>b-a);
+  el.textContent=dates.length?new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(dates[0]):'—';
+  el.title=dates.length?'Dernière attribution de points ou récompense enregistrée':'Aucune attribution enregistrée';
+ }catch(err){if(current===seq){el.textContent='—';el.title='Dernier passage indisponible : '+err.message;}}
+}
+function schedule(){if(pending)return;pending=true;setTimeout(()=>{pending=false;refresh()},100)}
+window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;seq++;lastKey='';if(token)schedule()});
+document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'){lastKey='';schedule()}});
+document.addEventListener('click',e=>{if(e.target.closest?.('#mc-clientdetail .mcf-action, #mc-clientdetail [data-mcf-action], #mc-clientdetail button')){setTimeout(refresh,1200);setTimeout(refresh,3500)}});
+function start(){const v=view();if(!v)return;const obs=new MutationObserver(()=>{const key=v.dataset.psSelectedClientId||'';if(key!==lastKey){lastKey=key;seq++;if(key)schedule()}});obs.observe(v,{attributes:true,attributeFilter:['data-ps-selected-client-id']});if(v.dataset.psSelectedClientId){lastKey=v.dataset.psSelectedClientId;schedule()}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
