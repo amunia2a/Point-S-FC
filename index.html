@@ -3188,6 +3188,7 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
       }
       identityNote.hidden=!value;
     }
+    view.mcfShowSavedNote=showSavedNote;
     var noteField=noteBox.querySelector('textarea');
     noteField.addEventListener('input',function(){noteBox.querySelector('#mcfNoteCount').textContent=noteField.value.length+'/500';noteBox.querySelector('#mcfNoteFeedback').textContent='';});
     noteBox.querySelector('#mcfNoteSave').addEventListener('click',function(){
@@ -3255,7 +3256,7 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     var noteField=view.querySelector('#mcfClientNote');
     if(noteField){
       try{noteField.value=localStorage.getItem(view.dataset.mcfNoteKey)||'';}catch(e){noteField.value='';}
-      showSavedNote(noteField.value.trim());
+      if(typeof view.mcfShowSavedNote==='function') view.mcfShowSavedNote(noteField.value.trim());
       var counter=view.querySelector('#mcfNoteCount');
       if(counter)counter.textContent=noteField.value.length+'/500';
       var msg=view.querySelector('#mcfNoteFeedback');if(msg)msg.textContent='';
