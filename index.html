@@ -4857,7 +4857,7 @@ const info=tabs.querySelector('[data-mcf-tab="infos"]'),fid=tabs.querySelector('
 if(!info||!fid||!hist)return;info.textContent='Informations client';hist.textContent='Historique';tabs.replaceChildren(info);
 const actions=v.querySelector('.mcf-actions');const stats=v.querySelector('.mcf-stats')||v.querySelector('.mcf-idrow');const profile=v.querySelector('.mcf-profile');if(actions&&profile){profile.appendChild(actions);actions.classList.add('ps-profile-actions')}const fidelityPanel=v.querySelector('[data-mcf-panel="fidelite"]');if(fidelityPanel)fidelityPanel.remove();
 const noteTab=document.createElement('button');noteTab.type='button';noteTab.dataset.mcfTab='notes';noteTab.textContent='Notes client';tabs.append(noteTab,hist);
-const notes=document.createElement('section');notes.className='mcf-client-panel';notes.dataset.mcfPanel='notes';notes.innerHTML='<div class="ps-notes-layout"><div><h3>Notes enregistrées</h3><div id="psClientNotesList"></div></div><div><h3>Nouvelle note</h3><textarea id="psClientNoteInput" maxlength="500" placeholder="Écrire une note client..."></textarea><div class="ps-edit-row"><small id="psClientNoteCount">0/500</small><button type="button" class="ps-note-save" id="psClientNoteSave">Enregistrer</button></div><p class="ps-edit-muted">Notes enregistrées sur cet appareil uniquement (non synchronisées).</p></div></div>';
+const notes=document.createElement('section');notes.className='mcf-client-panel';notes.dataset.mcfPanel='notes';notes.innerHTML='<div class="ps-notes-layout"><div><h3>Note</h3><div id="psClientNotesList"></div></div><div><h3>Ajouter une note</h3><textarea id="psClientNoteInput" maxlength="500" placeholder="Écrire une note client..."></textarea><div class="ps-edit-row"><small id="psClientNoteCount">0/500</small><button type="button" class="ps-note-save" id="psClientNoteSave">Enregistrer</button></div><p class="ps-edit-muted">Notes enregistrées sur cet appareil uniquement (non synchronisées).</p></div></div>';
 v.querySelector('[data-mcf-panel="historique"]').before(notes);
 const panel=v.querySelector('[data-mcf-panel="infos"]');panel.innerHTML='<h3 class="mcf-heading">Informations client</h3><p class="ps-edit-muted" id="psClientDataNotice">Les informations visibles proviennent de la liste clients. Les modifications sécurisées nécessitent un client Supabase identifié.</p><div id="psClientEditArea"></div>';
 notes.querySelector('#psClientNoteInput').addEventListener('input',e=>notes.querySelector('#psClientNoteCount').textContent=e.target.value.length+'/500');
@@ -4983,4 +4983,35 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #merchantMode #mc-clientdetail .ps-vehicle-new-fields input{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:12px;border:1px solid #cbdcf5;border-radius:10px;background:white;color:#103968;font:inherit}
 @media(max-width:760px){#merchantMode #mc-clientdetail .ps-vehicle-new-fields{grid-template-columns:1fr}#merchantMode #mc-clientdetail .mcf-profile{grid-template-columns:1fr!important}}
 </style>
+
+<style id="ps-client-header-details-20261020">
+#merchantMode #mc-clientdetail .ps-client-top-details{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:7px 0 0;font-size:12px;color:#244d80;max-width:100%;overflow-wrap:anywhere}
+#merchantMode #mc-clientdetail .ps-client-top-details .ps-top-row{display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+#merchantMode #mc-clientdetail .ps-client-top-details .ps-top-row svg{flex-shrink:0;margin-top:2px}
+#merchantMode #mc-clientdetail .ps-top-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:#edf3fb;color:#15558d;font-size:11px;font-weight:800;order:1!important;margin:2px 0!important}
+#merchantMode #mc-clientdetail .ps-top-status.vip{background:#fff1cf;color:#96600c}
+#merchantMode #mc-clientdetail .ps-identity-reordered .mcf-phone-top{order:2!important}
+#merchantMode #mc-clientdetail .ps-identity-reordered .ps-client-top-details{order:3!important}
+#merchantMode #mc-clientdetail .ps-identity-reordered .ps-code-line{order:4!important}
+</style>
+<script id="ps-client-header-details-script">
+(function(){'use strict';
+const view=()=>document.getElementById('mc-clientdetail');
+let currentStatus='';
+function value(id){const el=view()?.querySelector('#'+id);if(!el)return '';return (el.value||'').trim()}
+function sync(){const v=view();if(!v||v.hidden)return;const identity=v.querySelector('.mcf-identity');if(!identity)return;
+let badge=identity.querySelector('.ps-top-status');if(!badge){badge=document.createElement('span');badge.className='ps-top-status';const name=identity.querySelector('strong');name?.insertAdjacentElement('afterend',badge)}
+const st=currentStatus.trim();badge.textContent=st?('Statut : '+st):'Statut : non renseigné';badge.classList.toggle('vip',/vip/i.test(st));
+let details=identity.querySelector('.ps-client-top-details');if(!details){details=document.createElement('div');details.className='ps-client-top-details';identity.append(details)}
+const address=value('psAddress');const vehicleEls=v.querySelectorAll('#psVehicleList .ps-vehicle');const veh=[];
+vehicleEls.forEach(el=>{const b=el.querySelector('input[id^="psVm"]')?.value||'',m=el.querySelector('input[id^="psVd"]')?.value||'',plate=el.querySelector('input[id^="psVi"]')?.value||'';const desc=[b,m].filter(Boolean).join(' ');if(desc||plate)veh.push([desc,plate].filter(Boolean).join(' · '))});
+const rows=[['Adresse',address||'Non renseignée'],['Véhicule',veh.length?veh.join(' / '):'Aucun véhicule enregistré']];
+rows.forEach(([label,val],i)=>{let r=details.children[i];if(!r){r=document.createElement('div');r.className='ps-top-row';details.append(r)}const txt=label+' : '+val;if(r.textContent!==txt)r.textContent=txt});
+}
+document.addEventListener('click',e=>{const card=e.target.closest?.('#mclList .mcl-card, .mcl-card');if(card){const raw=card.dataset.status||card.querySelector('.mcl-vip,.vip,.mcl-status')?.textContent||'';currentStatus=/vip/i.test(raw)?'VIP':(/standard|classique|premium/i.test(raw)?raw.trim():'');setTimeout(sync,80);setTimeout(sync,600)}},true);
+const observer=new MutationObserver(()=>{if(observer._pending)return;observer._pending=true;requestAnimationFrame(()=>{observer._pending=false;sync()})});
+function start(){const v=view();if(!v)return;observer.observe(v,{childList:true,subtree:true});sync()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
 </body></html>
