@@ -3172,9 +3172,19 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
       if(!identityNote) return;
       identityNote.replaceChildren();
       if(value){
-        var mark=document.createElement('span');mark.className='mcf-note-symbol';mark.setAttribute('aria-hidden','true');mark.textContent='✎';
-        var text=document.createElement('span');text.className='mcf-note-preview-text';text.textContent=value;
-        identityNote.append(mark,text);
+        var icon=document.createElement('span');
+        icon.className='mcf-note-symbol'; icon.setAttribute('aria-hidden','true'); icon.textContent='✎';
+        var content=document.createElement('span'); content.className='mcf-note-content';
+        var heading=document.createElement('span'); heading.className='mcf-note-heading'; heading.textContent='Note client';
+        var body=document.createElement('span'); body.className='mcf-note-preview-text'; body.textContent=value;
+        content.append(heading,body);
+        var edit=document.createElement('button'); edit.type='button'; edit.className='mcf-note-edit';
+        edit.setAttribute('aria-label','Modifier la note client'); edit.title='Modifier la note'; edit.textContent='✎';
+        edit.addEventListener('click',function(){
+          var tab=view.querySelector('[data-mcf-tab="infos"]'); if(tab) tab.click();
+          var input=view.querySelector('#mcfClientNote'); if(input) input.focus();
+        });
+        identityNote.append(icon,content,edit);
       }
       identityNote.hidden=!value;
     }
@@ -3245,22 +3255,7 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     var noteField=view.querySelector('#mcfClientNote');
     if(noteField){
       try{noteField.value=localStorage.getItem(view.dataset.mcfNoteKey)||'';}catch(e){noteField.value='';}
-      var savedPreview=view.querySelector('.mcf-saved-note');
-      if(savedPreview){
-        savedPreview.replaceChildren();
-        var savedText=noteField.value.trim();
-        if(savedText){
-          var noteIcon=document.createElement('span');
-          noteIcon.className='mcf-note-symbol';
-          noteIcon.setAttribute('aria-hidden','true');
-          noteIcon.textContent='✎';
-          var noteContent=document.createElement('span');
-          noteContent.className='mcf-note-preview-text';
-          noteContent.textContent=savedText;
-          savedPreview.append(noteIcon,noteContent);
-        }
-        savedPreview.hidden=!savedText;
-      }
+      showSavedNote(noteField.value.trim());
       var counter=view.querySelector('#mcfNoteCount');
       if(counter)counter.textContent=noteField.value.length+'/500';
       var msg=view.querySelector('#mcfNoteFeedback');if(msg)msg.textContent='';
@@ -4663,6 +4658,39 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
 @media(max-width:650px){
  #merchantMode #mc-clientdetail #mcHistory .mc-history{grid-template-columns:38px minmax(0,1fr) auto!important;gap:9px!important;padding:11px 6px!important}
  #merchantMode #mc-clientdetail .mcf-identity>.mcf-saved-note{max-width:100%}
+}
+</style>
+
+<style id="mcf-saved-note-option-one-20261020">
+/* Saved note only: compact, polished card below client identity. */
+#merchantMode #mc-clientdetail .mcf-identity>.mcf-saved-note:not([hidden]){
+  display:flex!important; align-items:flex-start!important; gap:9px!important;
+  width:100%;max-width:380px;box-sizing:border-box;
+  padding:10px 12px!important;margin-top:5px!important;
+  border:1px solid #d9e8fb!important;border-radius:12px!important;
+  background:#f4f9ff!important;box-shadow:0 2px 8px rgba(19,78,151,.045);
+  color:#24466e!important;white-space:normal!important;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-symbol{
+  width:29px;height:29px;flex:0 0 29px;display:grid;place-items:center;
+  border-radius:50%;background:#e4f0ff;color:#1465b6;font-size:16px;line-height:1;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-content{
+  min-width:0;flex:1;display:flex;flex-direction:column;gap:3px;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-heading{
+  color:#123e7a;font-weight:750;font-size:10.5px;line-height:1.3;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-preview-text{
+  color:#355371;font-size:10.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-edit{
+  border:0;background:transparent;color:#236bb6;cursor:pointer;
+  padding:4px 6px;font-size:15px;line-height:1;border-radius:7px;flex:0 0 auto;
+}
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-edit:hover,
+#merchantMode #mc-clientdetail .mcf-saved-note .mcf-note-edit:focus-visible{
+  background:#e3efff;outline:2px solid transparent;
 }
 </style>
 </body></html>
