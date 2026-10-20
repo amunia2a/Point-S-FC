@@ -3144,6 +3144,19 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     profile.after(shell);
     shell.append(tabs,pInfo,pFid,pHist);
     pInfo.append(infoTitle,info);
+    /* Only addition to Informations: a compact private note field. */
+    var noteBox=document.createElement('div');
+    noteBox.className='mcf-client-note';
+    noteBox.innerHTML='<label for="mcfClientNote">Note client</label><textarea id="mcfClientNote" maxlength="500" rows="4" placeholder="Ajouter une note sur ce client..."></textarea><div class="mcf-note-footer"><small id="mcfNoteCount">0/500</small><button type="button" id="mcfNoteSave">Enregistrer</button></div><small id="mcfNoteFeedback" aria-live="polite"></small>';
+    pInfo.append(noteBox);
+    var noteField=noteBox.querySelector('textarea');
+    noteField.addEventListener('input',function(){noteBox.querySelector('#mcfNoteCount').textContent=noteField.value.length+'/500';noteBox.querySelector('#mcfNoteFeedback').textContent='';});
+    noteBox.querySelector('#mcfNoteSave').addEventListener('click',function(){
+      if(!view.dataset.mcfNoteKey) return;
+      try{localStorage.setItem(view.dataset.mcfNoteKey,noteField.value);noteBox.querySelector('#mcfNoteFeedback').textContent='Note enregistrée sur cet appareil.';}
+      catch(e){noteBox.querySelector('#mcfNoteFeedback').textContent='Enregistrement local impossible.';}
+    });
+
     var fidelityHeading=document.createElement('div');
     fidelityHeading.className='mcf-fidelity-intro';
     fidelityHeading.innerHTML='<h2>Gérer la fidélité</h2><p>Ajoutez des points ou attribuez une récompense à ce client.</p>';
@@ -3189,6 +3202,7 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     if(nm) nm.textContent=name;
     if(ph) ph.textContent=phone;
     if(status){
+      status.classList.toggle('mcf-vip-gold',/\bVIP\b/i.test(badge));
       var svg=status.querySelector('svg');
       status.textContent='';
       if(svg) status.appendChild(svg);
@@ -3197,6 +3211,16 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
     if(bal) bal.textContent=points;
     if(lastLabel) lastLabel.textContent='Dernier passage';
     if(lastValue) lastValue.textContent=last;
+    /* Local-only note draft keyed by the selected client; no Supabase schema change. */
+    view.dataset.mcfNoteKey='pointsf-client-note:'+name+':'+phone;
+    var noteField=view.querySelector('#mcfClientNote');
+    if(noteField){
+      try{noteField.value=localStorage.getItem(view.dataset.mcfNoteKey)||'';}catch(e){noteField.value='';}
+      var counter=view.querySelector('#mcfNoteCount');
+      if(counter)counter.textContent=noteField.value.length+'/500';
+      var msg=view.querySelector('#mcfNoteFeedback');if(msg)msg.textContent='';
+    }
+
 
     document.getElementById('merchantMode')?.classList.add('mcf-minimal-open');
     merchantView('clientdetail');
@@ -4507,5 +4531,19 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
  #merchantMode #mc-clientdetail .mcf-actions{gap:8px!important}
  #merchantMode #mc-clientdetail .mcf-action{font-size:11px!important;min-height:92px!important;padding:10px!important}
 }
+</style>
+
+<style id="mcf-vip-and-notes-only">
+/* Two targeted changes: VIP badge and a notes field in Informations. */
+#merchantMode #mc-clientdetail .mcf-active.mcf-vip-gold{background:#fff8e6!important;color:#c78200!important;border:1px solid #efb527!important;gap:5px!important}
+#merchantMode #mc-clientdetail .mcf-active.mcf-vip-gold svg{display:none!important}
+#merchantMode #mc-clientdetail .mcf-active.mcf-vip-gold:before{content:'★';color:#f4b400;font-size:15px;line-height:1}
+#merchantMode #mc-clientdetail .mcf-client-note{margin-top:13px;padding:14px;border:1px solid #dce8f8;border-radius:16px;background:#f8fbff}
+#merchantMode #mc-clientdetail .mcf-client-note label{display:block;font-size:13px;font-weight:850;color:#174580;margin-bottom:9px}
+#merchantMode #mc-clientdetail .mcf-client-note textarea{display:block;box-sizing:border-box;width:100%;min-height:105px;resize:vertical;border:1px solid #cfdef3;border-radius:12px;background:white;padding:12px;color:#174580;font:inherit;font-size:13px;outline-color:#126ac5}
+#merchantMode #mc-clientdetail .mcf-note-footer{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+#merchantMode #mc-clientdetail .mcf-note-footer small{font-size:11px;color:#788aa4}
+#merchantMode #mc-clientdetail .mcf-note-footer button{border:0;border-radius:10px;background:#1662b2;color:white;font-weight:750;padding:9px 13px;cursor:pointer}
+#merchantMode #mc-clientdetail #mcfNoteFeedback{display:block;font-size:11px;color:#64748b;margin-top:6px}
 </style>
 </body></html>
