@@ -4783,4 +4783,70 @@ new MutationObserver(()=>{if(token&&el('psRpcArea')&&!el('psRewardCatalog')){mou
   background:#e3efff;outline:2px solid transparent;
 }
 </style>
+<style id="ps-client-four-tabs-style">
+#merchantMode #mc-clientdetail .mcf-client-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:0!important;gap:2px}
+#merchantMode #mc-clientdetail .mcf-client-tabs button{font-size:clamp(9px,2.4vw,12px)!important;padding:14px 3px!important;cursor:pointer}
+#merchantMode #mc-clientdetail .mcf-fidelity-shell{background:#fff;border:1px solid #e0eafa;border-radius:20px;padding:12px;box-shadow:0 6px 20px #154a7909;margin-top:14px}
+#merchantMode #mc-clientdetail .mcf-client-panel{padding-top:15px}
+#merchantMode #mc-clientdetail .mcf-profile{margin-bottom:8px}
+#merchantMode #mc-clientdetail .mcf-saved-note{display:none!important}
+#merchantMode #mc-clientdetail .mcf-client-note{display:none!important}
+#merchantMode #mc-clientdetail .ps-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#merchantMode #mc-clientdetail .ps-edit-field{min-width:0;background:#f7faff;border:1px solid #e0eafa;border-radius:13px;padding:12px}
+#merchantMode #mc-clientdetail .ps-edit-field label{display:block;color:#5f7391;font-size:11px;font-weight:800;margin-bottom:6px}
+#merchantMode #mc-clientdetail .ps-edit-field input,#merchantMode #mc-clientdetail .ps-edit-field textarea{width:100%;box-sizing:border-box;border:1px solid #cad9ed;border-radius:9px;padding:10px;background:#fff;color:#174580;font:inherit;font-size:13px}
+#merchantMode #mc-clientdetail .ps-edit-field textarea{min-height:76px;resize:vertical}
+#merchantMode #mc-clientdetail .ps-edit-field.wide{grid-column:1/-1}
+#merchantMode #mc-clientdetail .ps-edit-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#merchantMode #mc-clientdetail .ps-edit-row button{border:0;background:#e7f1ff;color:#18599d;border-radius:8px;padding:5px 9px;cursor:pointer}
+#merchantMode #mc-clientdetail .ps-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin:12px 0}
+#merchantMode #mc-clientdetail .ps-edit-actions button,#merchantMode #mc-clientdetail .ps-note-save{border:0;border-radius:10px;padding:11px 14px;background:#15599f;color:white;font-weight:800;cursor:pointer}
+#merchantMode #mc-clientdetail .ps-edit-actions button.secondary{background:#eaf1fb;color:#174580}
+#merchantMode #mc-clientdetail .ps-edit-status{font-size:12px;color:#526d8d;min-height:18px;margin:8px 0}
+#merchantMode #mc-clientdetail .ps-edit-muted{font-size:12px;color:#75859b;line-height:1.5}
+#merchantMode #mc-clientdetail .ps-vehicle{border:1px solid #dce8f8;border-radius:13px;padding:12px;margin:9px 0}
+#merchantMode #mc-clientdetail .ps-notes-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#merchantMode #mc-clientdetail .ps-note-card{border:1px solid #e0eafa;border-radius:13px;padding:12px;margin:8px 0;background:#f9fbff;overflow-wrap:anywhere}
+#merchantMode #mc-clientdetail .ps-note-card small{display:block;color:#8293a8;margin-bottom:6px}
+#merchantMode #mc-clientdetail .ps-notes-layout textarea{width:100%;box-sizing:border-box;min-height:115px;border:1px solid #cbd9eb;border-radius:10px;padding:10px;font:inherit}
+@media(max-width:650px){#merchantMode #mc-clientdetail .ps-edit-grid,#merchantMode #mc-clientdetail .ps-notes-layout{grid-template-columns:1fr}}
+</style>
+<script id="ps-client-four-tabs-script">
+(function(){'use strict';
+const SB='https://lsffbioatihkjtiutgma.supabase.co',KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+let token=null,selected=null,client=null,vehicles=[];
+const view=()=>document.getElementById('mc-clientdetail');
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opts={}){if(!token)throw Error('Connexion commerçant requise');const r=await fetch(SB+path,{...opts,headers:{apikey:KEY,Authorization:'Bearer '+token,...(opts.headers||{})}});const t=await r.text();let d;try{d=t?JSON.parse(t):null}catch(_){d=null}if(!r.ok)throw Error(d?.message||d?.error||'Erreur '+r.status);return d}
+function field(label,id,value='',editable=true,wide=false){return '<div class="ps-edit-field '+(wide?'wide':'')+'"><div class="ps-edit-row"><label for="'+id+'">'+escape(label)+'</label>'+(editable?'<button type="button" data-edit="'+id+'" title="Modifier '+escape(label)+'" aria-label="Modifier '+escape(label)+'">✎</button>':'')+'</div><input id="'+id+'" value="'+escape(value)+'" '+(editable?'disabled':'disabled')+'></div>'}
+function prepare(){const v=view();if(!v||!v.dataset.minimalReady)return;const tabs=v.querySelector('.mcf-client-tabs');if(!tabs||tabs.dataset.psFour)return;
+const info=tabs.querySelector('[data-mcf-tab="infos"]'),fid=tabs.querySelector('[data-mcf-tab="fidelite"]'),hist=tabs.querySelector('[data-mcf-tab="historique"]');
+if(!info||!fid||!hist)return;info.textContent='Informations client';hist.textContent='Historique';tabs.replaceChildren(info,fid);
+const noteTab=document.createElement('button');noteTab.type='button';noteTab.dataset.mcfTab='notes';noteTab.textContent='Notes client';tabs.append(noteTab,hist);
+const notes=document.createElement('section');notes.className='mcf-client-panel';notes.dataset.mcfPanel='notes';notes.innerHTML='<div class="ps-notes-layout"><div><h3>Notes enregistrées</h3><div id="psClientNotesList"></div></div><div><h3>Nouvelle note</h3><textarea id="psClientNoteInput" maxlength="500" placeholder="Écrire une note client..."></textarea><div class="ps-edit-row"><small id="psClientNoteCount">0/500</small><button type="button" class="ps-note-save" id="psClientNoteSave">Enregistrer</button></div><p class="ps-edit-muted">Notes stockées sur cet appareil uniquement.</p></div></div>';
+v.querySelector('[data-mcf-panel="historique"]').before(notes);
+const panel=v.querySelector('[data-mcf-panel="infos"]');panel.innerHTML='<h3 class="mcf-heading">Informations client</h3><p class="ps-edit-muted" id="psClientDataNotice">Sélectionnez une fiche réelle pour modifier ses informations Supabase.</p><div id="psClientEditArea"></div>';
+notes.querySelector('#psClientNoteInput').addEventListener('input',e=>notes.querySelector('#psClientNoteCount').textContent=e.target.value.length+'/500');
+notes.querySelector('#psClientNoteSave').onclick=()=>{const text=notes.querySelector('#psClientNoteInput').value.trim();if(!text||!selected)return;const key='pointsf-client-notes-v2:'+selected;let all=[];try{all=JSON.parse(localStorage.getItem(key)||'[]')}catch(_){}all.unshift({text,date:new Date().toLocaleString('fr-FR')});localStorage.setItem(key,JSON.stringify(all));notes.querySelector('#psClientNoteInput').value='';notes.querySelector('#psClientNoteCount').textContent='0/500';renderNotes()};
+tabs.dataset.psFour='1';info.click();}
+function renderNotes(){const v=view();if(!v)return;let all=[];try{all=JSON.parse(localStorage.getItem('pointsf-client-notes-v2:'+selected)||'[]')}catch(_){}const old=localStorage.getItem(v.dataset.mcfNoteKey||'');if(old&&!all.length)all=[{text:old,date:'Note précédente'}];v.querySelector('#psClientNotesList').innerHTML=all.length?all.map(n=>'<div class="ps-note-card"><small>'+escape(n.date)+'</small>'+escape(n.text)+'</div>').join(''):'<p class="ps-edit-muted">Aucune note enregistrée.</p>'}
+function status(t){const e=view()?.querySelector('#psClientEditStatus');if(e)e.textContent=t}
+function renderClient(){const area=view()?.querySelector('#psClientEditArea');if(!area)return;
+if(!client){area.innerHTML='<div class="ps-edit-field"><label>Code client Supabase</label><input id="psClientCode" placeholder="Code client réel (pas une fiche démo)"><div class="ps-edit-actions"><button type="button" id="psClientLoad">Charger le client</button></div><p class="ps-edit-muted">Les cartes de démonstration ne sont pas liées automatiquement aux enregistrements Supabase. Saisissez le code d’un client réel pour accéder à sa fiche.</p><p id="psClientEditStatus" class="ps-edit-status"></p></div>';area.querySelector('#psClientLoad').onclick=loadClient;return}
+const c=client;
+area.innerHTML='<div class="ps-edit-grid">'+field('E-mail','psEmail',c.email||'',false)+field('Téléphone','psPhone',c.telephone)+field('Adresse','psAddress',c.adresse,true,true)+'<div class="ps-edit-field wide"><div class="ps-edit-row"><label for="psExtra">Informations complémentaires</label><button type="button" data-edit="psExtra" aria-label="Modifier les informations complémentaires">✎</button></div><textarea id="psExtra" maxlength="2000" disabled>'+escape(c.informations_complementaires)+'</textarea></div></div><div class="ps-edit-actions"><button class="secondary" type="button" id="psClientCancel">Annuler</button><button type="button" id="psClientSave">Enregistrer</button></div><h3 class="mcf-heading">Véhicules</h3><div id="psVehicleList"></div><p id="psClientEditStatus" class="ps-edit-status"></p>';
+area.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const input=area.querySelector('#'+b.dataset.edit);input.disabled=false;input.focus()});
+area.querySelector('#psClientCancel').onclick=renderClient;
+area.querySelector('#psClientSave').onclick=async()=>{const btn=area.querySelector('#psClientSave');btn.disabled=true;status('Enregistrement…');try{await api('/rest/v1/rpc/ps_modifier_infos_client',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_client_id:c.id,p_telephone:area.querySelector('#psPhone').value,p_adresse:area.querySelector('#psAddress').value,p_informations_complementaires:area.querySelector('#psExtra').value})});c.telephone=area.querySelector('#psPhone').value;c.adresse=area.querySelector('#psAddress').value;c.informations_complementaires=area.querySelector('#psExtra').value;renderClient();status('Modifications enregistrées dans Supabase.')}catch(e){status('Échec : '+e.message)}finally{btn.disabled=false}};
+const list=area.querySelector('#psVehicleList');list.innerHTML=vehicles.length?vehicles.map((x,i)=>'<div class="ps-vehicle" data-vehicle="'+i+'"><div class="ps-edit-grid">'+field('Marque','psVm'+i,x.marque)+field('Modèle','psVd'+i,x.modele)+field('Immatriculation','psVi'+i,x.immatriculation,true,true)+'</div><div class="ps-edit-actions"><button class="secondary" type="button" data-cancelvehicle="'+i+'">Annuler</button><button type="button" data-savevehicle="'+i+'">Enregistrer ce véhicule</button></div></div>').join(''):'<p class="ps-edit-muted">Aucun véhicule enregistré.</p>';
+list.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const inp=area.querySelector('#'+b.dataset.edit);inp.disabled=false;inp.focus()});
+list.querySelectorAll('[data-cancelvehicle]').forEach(b=>b.onclick=renderClient);
+list.querySelectorAll('[data-savevehicle]').forEach(b=>b.onclick=async()=>{const i=+b.dataset.savevehicle,x=vehicles[i];b.disabled=true;status('Enregistrement du véhicule…');try{const marque=area.querySelector('#psVm'+i).value,modele=area.querySelector('#psVd'+i).value,immatriculation=area.querySelector('#psVi'+i).value;await api('/rest/v1/rpc/ps_modifier_vehicule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_vehicule_id:x.id,p_marque:marque,p_modele:modele,p_immatriculation:immatriculation})});Object.assign(x,{marque,modele,immatriculation:immatriculation.toUpperCase()});renderClient();status('Véhicule enregistré dans Supabase.')}catch(e){status('Échec : '+e.message)}finally{b.disabled=false}});
+}
+async function loadClient(){const code=view()?.querySelector('#psClientCode')?.value.trim();if(!code){status('Saisissez un code client.');return}status('Recherche du client…');try{const clients=await api('/rest/v1/clients?select=id,prenom,nom,email,telephone,adresse,informations_complementaires,code_client&code_client=eq.'+encodeURIComponent(code)+'&limit=1');if(!clients.length)throw Error('Client introuvable ou accès refusé');const c=clients[0];const garageCity=document.getElementById('mcGarage')?.value||'Ajaccio';const garages=await api('/rest/v1/garages?select=id,ville');const g=garages.find(x=>x.ville?.toLowerCase()===garageCity.toLowerCase());if(!g)throw Error('Garage introuvable');const ac=await api('/rest/v1/comptes_fidelite?select=id,solde_points&garage_id=eq.'+encodeURIComponent(g.id)+'&client_id=eq.'+encodeURIComponent(c.id)+'&limit=1');if(!ac.length)throw Error('Ce client n’a pas de compte dans le garage sélectionné');const vs=await api('/rest/v1/vehicules?select=id,marque,modele,immatriculation&client_id=eq.'+encodeURIComponent(c.id));client=c;vehicles=vs;selected='supabase:'+c.id;const v=view();v.querySelector('.mcf-identity strong').textContent=[c.prenom,c.nom].filter(Boolean).join(' ');v.querySelector('.mcf-phone-top').textContent=c.telephone||'';v.querySelector('#mcBalance').textContent=ac[0].solde_points;v.querySelector('#psClientDataNotice').textContent='Données du client enregistrées dans Supabase. E-mail en lecture seule.';renderClient();renderNotes()}catch(e){status('Recherche impossible : '+e.message)}}
+window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;if(!token){client=null;vehicles=[]}});
+function wrap(){const old=window.merchantOpenClientMinimal;if(typeof old!=='function'||old.__psFour)return;const next=function(card){const r=old.apply(this,arguments);prepare();client=null;vehicles=[];selected=card.dataset.codeClient?'code:'+card.dataset.codeClient:(card.dataset.name||card.querySelector('.mcl-person b')?.textContent||'client');renderClient();renderNotes();view()?.querySelector('[data-mcf-tab="infos"]')?.click();return r};next.__psFour=true;window.merchantOpenClientMinimal=next}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wrap);else wrap();
+})();
+</script>
 </body></html>
