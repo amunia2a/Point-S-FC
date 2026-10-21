@@ -4640,9 +4640,9 @@ async function refresh(){if(!token||!$('psRpcArea'))return;try{
  }catch(e){accounts=[];feedback('Lecture impossible : '+e.message)}}
 async function doPoints(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value),points=Number($('psRpcPoints')?.value);if(!a||!Number.isInteger(points)||points<1||points>100000){feedback('Choisissez un client et un nombre de points valide (1 à 100 000).');return}
  if(!confirm('Ajouter '+points+' points à '+([a.clients?.prenom,a.clients?.nom].filter(Boolean).join(' ')||'ce client')+' ?'))return;
- const b=$('psRpcAdd');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_ajouter_points',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_points:points,p_commentaire:'Ajout depuis tableau de bord PC'})});feedback('Points ajoutés. Nouveau solde : '+d[0].nouveau_solde+'.');await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Opération refusée : '+e.message)}finally{b.disabled=false}}
+ const b=$('psRpcAdd');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_ajouter_points',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_points:points,p_commentaire:'Ajout depuis tableau de bord PC'})});feedback('Points ajoutés. Nouveau solde : '+d[0].nouveau_solde+'.');window.dispatchEvent(new CustomEvent('rnf-fidelite-operation-ok',{detail:{type:'points',solde:Number(d[0].nouveau_solde),points:points}}));await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Opération refusée : '+e.message)}finally{b.disabled=false}}
 async function rewards(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value);if(!a){feedback('Choisissez d’abord un client.');return}try{const rs=await api('/rest/v1/recompenses?select=id,titre,cout_points&actif=eq.true&or=(garage_id.is.null,garage_id.eq.'+encodeURIComponent(garageId)+')&order=cout_points.asc');$('psRpcReward').innerHTML='<option value="">Choisir une récompense…</option>'+rs.map(r=>'<option value="'+safe(r.id)+'">'+safe(r.titre)+' — '+safe(r.cout_points)+' pts</option>').join('');feedback(rs.length+' récompenses disponibles.')}catch(e){feedback('Erreur récompenses : '+e.message)}}
-async function redeem(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value),rid=$('psRpcReward')?.value;if(!a||!rid){feedback('Choisissez un client et une récompense.');return}if(!confirm('Attribuer cette récompense et déduire les points du client ?'))return;const b=$('psRpcRedeem');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_attribuer_recompense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_recompense_id:rid,p_commentaire:'Attribution depuis tableau de bord PC'})});feedback('Récompense attribuée. Nouveau solde : '+d[0].nouveau_solde+'.');await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Attribution refusée : '+e.message)}finally{b.disabled=false}}
+async function redeem(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value),rid=$('psRpcReward')?.value;if(!a||!rid){feedback('Choisissez un client et une récompense.');return}if(!confirm('Attribuer cette récompense et déduire les points du client ?'))return;const b=$('psRpcRedeem');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_attribuer_recompense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_recompense_id:rid,p_commentaire:'Attribution depuis tableau de bord PC'})});feedback('Récompense attribuée. Nouveau solde : '+d[0].nouveau_solde+'.');window.dispatchEvent(new CustomEvent('rnf-fidelite-operation-ok',{detail:{type:'reward',solde:Number(d[0].nouveau_solde),recompense:document.getElementById('psRpcReward')?.selectedOptions?.[0]?.textContent||''}}));await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Attribution refusée : '+e.message)}finally{b.disabled=false}}
 // Recherche par code, sans exposer les listes de clients dans l'interface PC.
 window.psDesktopFindClient=async function(code){
  if(!token||!garageId)throw Error('Connectez-vous et sélectionnez un garage.');
@@ -6036,4 +6036,45 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #rnfDesktopModal.rnf-modal-reward .rnf-modal-confirm{background:#8234e9}#rnfDesktopModal .rnf-modal-confirm svg{width:20px;height:20px}
 @media(max-width:959px){#rnfDesktopModal{display:none!important}}
 </style>
+
+<style id="rnf-confirmations-fidelite-style">
+@media(min-width:960px){
+#rnfDesktopModal .rnf-balance{display:flex;gap:13px;align-items:center;background:#e0f8eb;border-radius:13px;padding:13px 15px;margin:-5px 0 18px;color:#08733c}
+#rnfDesktopModal.rnf-modal-reward .rnf-balance{background:#f2eaff;color:#6d25c8}
+#rnfDesktopModal .rnf-balance-icon{font-size:27px}
+#rnfDesktopModal .rnf-balance small{display:block;color:#537e6b;font-size:12px;margin-bottom:3px}
+#rnfDesktopModal .rnf-balance strong{font-size:19px}
+#rnfDesktopSuccess{position:fixed;inset:0;z-index:2147483500;display:grid;place-items:center;background:rgba(13,32,66,.52);backdrop-filter:blur(4px);font-family:ui-rounded,system-ui,sans-serif}
+#rnfDesktopSuccess .rnf-success-card{position:relative;width:min(92vw,370px);padding:35px 27px 25px;background:#fff;border-radius:23px;text-align:center;box-shadow:0 25px 80px rgba(8,31,69,.3);overflow:hidden;color:#12396f}
+#rnfDesktopSuccess .rnf-success-check{display:grid;place-items:center;margin:0 auto 13px;width:67px;height:67px;border-radius:50%;background:#00a65c;color:#fff;font-size:40px}
+#rnfDesktopSuccess.rnf-reward .rnf-success-check{background:#8133ef}
+#rnfDesktopSuccess h2{font-size:22px;margin:0 0 9px;color:#063b8c}
+#rnfDesktopSuccess p{font-size:14px;line-height:1.55;margin:0 0 17px}
+#rnfDesktopSuccess .rnf-new-balance{background:#e0faeb;padding:15px;border-radius:14px;margin-bottom:16px}
+#rnfDesktopSuccess.rnf-reward .rnf-new-balance{background:#f0e7ff}
+#rnfDesktopSuccess .rnf-new-balance small{display:block;font-size:13px;margin-bottom:4px}
+#rnfDesktopSuccess .rnf-new-balance strong{display:block;font-size:24px;color:#008747}
+#rnfDesktopSuccess.rnf-reward .rnf-new-balance strong{color:#7623d8}
+#rnfDesktopSuccess button{width:100%;border:0;border-radius:12px;padding:13px;background:#00a65c;color:white;font-size:16px;font-weight:750;cursor:pointer}
+#rnfDesktopSuccess.rnf-reward button{background:#8133ef}
+#rnfDesktopSuccess .rnf-confetti{position:absolute;top:-18px;width:8px;height:17px;border-radius:2px;animation:rnf-fall 2.6s ease-out both;pointer-events:none}
+@keyframes rnf-fall{from{transform:translateY(-20px) rotate(0);opacity:1}to{transform:translateY(460px) rotate(540deg);opacity:0}}
+}
+@media(max-width:959px){#rnfDesktopSuccess{display:none!important}}
+</style>
+<script id="rnf-confirmations-fidelite-script">
+(function(){'use strict';
+const $=id=>document.getElementById(id);
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getBalance(){const selected=$('psRpcClient')?.selectedOptions?.[0]?.textContent||'';const match=selected.match(/[—–-]\s*([\d\s]+)\s*pts/i);if(match)return Number(match[1].replace(/\s/g,''));const identity=$('psDcgIdentity')?.textContent||'';const m=identity.match(/([\d\s]+)\s*points/i);return m?Number(m[1].replace(/\s/g,'')):null}
+function insertBalance(){const modal=$('rnfDesktopModal');if(!modal||modal.querySelector('.rnf-balance'))return;const balance=getBalance();const target=modal.querySelector('.rnf-modal-client');if(!target)return;const card=document.createElement('div');card.className='rnf-balance';card.innerHTML='<span class="rnf-balance-icon">🏆</span><span><small>Solde actuel</small><strong>'+(Number.isFinite(balance)?balance.toLocaleString('fr-FR')+' points':'Solde en cours de chargement')+'</strong></span>';target.insertAdjacentElement('afterend',card)}
+const observer=new MutationObserver(()=>{if(window.innerWidth>=960)insertBalance()});observer.observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('rnf-fidelite-operation-ok',event=>{if(window.innerWidth<960)return;const d=event.detail||{};if(!Number.isFinite(d.solde))return;
+ $('rnfDesktopSuccess')?.remove();const type=d.type==='reward'?'reward':'points';const modal=document.createElement('div');modal.id='rnfDesktopSuccess';modal.className=type==='reward'?'rnf-reward':'rnf-points';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Confirmation de fidélité');const client=$('psDcgIdentity')?.querySelector('.rnf-client-info strong')?.textContent||$('psRpcClient')?.selectedOptions?.[0]?.textContent?.split('—')[0]?.trim()||'ce client';
+ const desc=type==='points'?(Number(d.points).toLocaleString('fr-FR')+' points ont été ajoutés au compte de '+escape(client)+'.'):('La récompense a été attribuée à '+escape(client)+'.');
+ modal.innerHTML='<section class="rnf-success-card"><div class="rnf-success-check">✓</div><h2>'+(type==='points'?'Points ajoutés !':'Récompense attribuée !')+'</h2><p>'+desc+'</p><div class="rnf-new-balance"><small>Nouveau solde</small><strong>'+d.solde.toLocaleString('fr-FR')+' points</strong></div><button type="button">OK</button></section>';
+ document.body.appendChild(modal);const colors=['#008de7','#00a65c','#8133ef','#f7c74d','#ef4ab8'];const card=modal.querySelector('.rnf-success-card');for(let i=0;i<28;i++){const bit=document.createElement('i');bit.className='rnf-confetti';bit.style.left=((i*37+11)%100)+'%';bit.style.background=colors[i%colors.length];bit.style.animationDelay=((i*13)%11)/12+'s';card.appendChild(bit)}modal.querySelector('button').focus();modal.querySelector('button').addEventListener('click',()=>modal.remove());
+});
+})();
+</script>
 </body></html>
