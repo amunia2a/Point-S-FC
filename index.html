@@ -4531,7 +4531,7 @@ if(metrics[0]){metrics[0].querySelector('b').textContent=accounts.length===1000?
 if(metrics[1]){metrics[1].querySelector('b').textContent='—';metrics[1].querySelector('small').textContent='Passages non suivis en base'}
 if(metrics[2]){metrics[2].querySelector('b').textContent=todays.filter(o=>o.type_operation==='recompense').length;metrics[2].querySelector('small').textContent='Opérations du jour'}
 if(metrics[3]){metrics[3].querySelector('b').textContent='—';metrics[3].querySelector('small').textContent='Avis Google non synchronisés'}
-if($('psPcRecentClients'))$('psPcRecentClients').innerHTML=accounts.length?accounts.slice(0,5).map(a=>'<div class="ps-pc-row"><span>'+esc([a.clients?.prenom,a.clients?.nom].filter(Boolean).join(' ')||'Client')+'</span><strong>'+esc(a.solde_points)+' points</strong></div>').join(''):'<div class="ps-pc-row">Aucun compte fidélité pour ce garage.</div>';
+if($('psPcRecentClients'))$('psPcRecentClients').innerHTML=accounts.length?accounts.slice(0,5).map(a=>'<button type="button" class="ps-pc-row rnf-recent-client" data-client-code="'+esc(a.clients?.code_client||'')+'" title="Sélectionner ce client"><span>'+esc([a.clients?.prenom,a.clients?.nom].filter(Boolean).join(' ')||'Client')+'</span><strong>'+esc(a.solde_points)+' points <span aria-hidden="true">›</span></strong></button>').join(''):'<div class="ps-pc-row">Aucun compte fidélité pour ce garage.</div>';
 if($('psPcRecentInfos'))$('psPcRecentInfos').innerHTML=infos.length?infos.slice(0,3).map(a=>'<button type="button" onclick="merchantView(\'infos\')">'+esc(a.titre)+'<small>'+new Date(a.created_at).toLocaleDateString('fr-FR')+' · '+(a.publie?'Publiée':'Brouillon')+'</small></button>').join(''):'<div>Aucune INFOS enregistrée.</div>';
 status('Données chargées depuis Supabase · '+garage.nom+(accounts.length===1000?' · liste plafonnée à 1 000 comptes':''));
 }catch(err){clearStats();status('Erreur de lecture : '+err.message)}}
@@ -6027,7 +6027,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  const add=$('psDcgAdd'),give=$('psDcgGive');if(add){add.innerHTML=icons.plus+' Ajouter des points';add.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('points')},true)}if(give){give.innerHTML=icons.gift+' Attribuer une récompense';give.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('reward')},true)}
  const identity=$('psDcgIdentity');if(identity){new MutationObserver(()=>{if(!identity.querySelector('.rnf-client-info'))displayClient()}).observe(identity,{childList:true,characterData:true,subtree:true})}
  }
- const observer=new MutationObserver(()=>{if(window.innerWidth>=960)enhance()});observer.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance(); setInterval(()=>{if(window.innerWidth>=960&&document.getElementById('psDesktopCodeGestion')&&!document.getElementById('psDesktopCodeGestion').dataset.rnfPopup)enhance()},1500);
 })();
 </script>
 <style id="rnf-pc-popup-approved-20261021">
@@ -6095,7 +6095,7 @@ const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getBalance(){const selected=$('psRpcClient')?.selectedOptions?.[0]?.textContent||'';const match=selected.match(/[—–-]\s*([\d\s]+)\s*pts/i);if(match)return Number(match[1].replace(/\s/g,''));const identity=$('psDcgIdentity')?.textContent||'';const m=identity.match(/([\d\s]+)\s*points/i);return m?Number(m[1].replace(/\s/g,'')):null}
 function insertBalance(){const modal=$('rnfDesktopModal');if(!modal||modal.querySelector('.rnf-balance'))return;const balance=getBalance();const target=modal.querySelector('.rnf-modal-client');if(!target)return;const card=document.createElement('div');card.className='rnf-balance';card.innerHTML='<span class="rnf-balance-icon">🏆</span><span><small>Solde actuel</small><strong>'+(Number.isFinite(balance)?balance.toLocaleString('fr-FR')+' points':'Solde en cours de chargement')+'</strong></span>';target.insertAdjacentElement('afterend',card)}
-const observer=new MutationObserver(()=>{if(window.innerWidth>=960)insertBalance()});observer.observe(document.documentElement,{childList:true,subtree:true});
+setInterval(()=>{if(window.innerWidth>=960&&document.getElementById('rnfDesktopModal'))insertBalance()},650);
 window.addEventListener('rnf-fidelite-operation-ok',event=>{if(window.innerWidth<960)return;const d=event.detail||{};if(!Number.isFinite(d.solde))return;
  $('rnfDesktopSuccess')?.remove();const type=d.type==='reward'?'reward':'points';const modal=document.createElement('div');modal.id='rnfDesktopSuccess';modal.className=type==='reward'?'rnf-reward':'rnf-points';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Confirmation de fidélité');const client=$('psDcgIdentity')?.querySelector('.rnf-client-info strong')?.textContent||$('psRpcClient')?.selectedOptions?.[0]?.textContent?.split('—')[0]?.trim()||'ce client';
  const desc=type==='points'?(Number(d.points).toLocaleString('fr-FR')+' points ont été ajoutés au compte de '+escape(client)+'.'):('La récompense a été attribuée à '+escape(client)+'.');
@@ -6146,7 +6146,38 @@ function adjust(){if(innerWidth<960)return;const home=document.getElementById('p
  const symbol=panel?.querySelector('.ps-dcg-symbol');if(symbol&&!symbol.dataset.rnfIcon){symbol.innerHTML=svg('scan');symbol.dataset.rnfIcon='1'}
 }
 window.rnfShowClientChoices=function(choices,choose){document.querySelector('.rnf-choice-overlay')?.remove();const overlay=document.createElement('div');overlay.className='rnf-choice-overlay';const dialog=document.createElement('section');dialog.className='rnf-choice-dialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.innerHTML='<h3>Choisir le client</h3><p>Plusieurs clients correspondent à votre recherche.</p><div class="rnf-choice-list"></div><button type="button" class="rnf-choice-close">Annuler</button>';overlay.append(dialog);document.body.append(overlay);const list=dialog.querySelector('.rnf-choice-list');choices.forEach(c=>{const b=document.createElement('button');b.type='button';const name=document.createElement('strong');name.textContent=c.nom||'Client';const code=document.createElement('span');code.textContent='Code : '+c.code;b.append(name,code);b.addEventListener('click',()=>{overlay.remove();choose(c.code)});list.append(b)});dialog.querySelector('.rnf-choice-close').onclick=()=>overlay.remove();overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()})};
-const obs=new MutationObserver(adjust);obs.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',adjust);else adjust();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',adjust);else adjust(); document.addEventListener('click',()=>setTimeout(adjust,80)); setInterval(()=>{if(window.innerWidth>=960)adjust()},1800);
+})();
+</script>
+
+<style id="rnf-pc-hide-duplicate-bottom-and-search-result-click">
+@media(min-width:960px){
+ #merchantMode #mc-dashboard .mc-validated-cards{display:none!important}
+ #merchantMode #psDcgIdentity.rnf-result-clickable{cursor:pointer!important;transition:box-shadow .15s,transform .15s;border-color:#c7ddfa!important}
+ #merchantMode #psDcgIdentity.rnf-result-clickable:hover,#merchantMode #psDcgIdentity.rnf-result-clickable:focus-visible{box-shadow:0 4px 18px rgba(22,105,200,.16)!important;outline:2px solid #85b9f3;outline-offset:2px}
+ #merchantMode #psDcgIdentity.rnf-result-clickable::after{content:"Voir la fiche  ›";color:#176ac6;font-size:13px;font-weight:800;white-space:nowrap;margin-left:8px}
+ #rnfSearchClientDetails{position:fixed;inset:0;z-index:2147483100;display:flex;align-items:center;justify-content:center;padding:20px;font-family:ui-rounded,system-ui,sans-serif}
+ #rnfSearchClientDetails .rnf-detail-shade{position:absolute;inset:0;background:rgba(11,32,66,.55)}
+ #rnfSearchClientDetails .rnf-detail-card{position:relative;width:min(100%,460px);background:white;border-radius:20px;padding:25px;box-shadow:0 20px 65px rgba(15,35,80,.3);color:#103b80}
+ #rnfSearchClientDetails h2{font-size:23px;margin:0 35px 20px 0}#rnfSearchClientDetails .rnf-detail-close{position:absolute;right:17px;top:14px;border:0;background:#f0f6ff;border-radius:50%;width:34px;height:34px;font-size:24px;color:#2360ad;cursor:pointer}
+ #rnfSearchClientDetails .rnf-detail-person{display:flex;gap:13px;align-items:center;padding:16px;background:#eff6ff;border-radius:15px;margin-bottom:14px}
+ #rnfSearchClientDetails .rnf-detail-avatar{display:grid;place-items:center;border-radius:50%;width:48px;height:48px;background:#e9e2ff;color:#7132c6;font-weight:800}
+ #rnfSearchClientDetails .rnf-detail-person strong{display:block;font-size:18px}#rnfSearchClientDetails .rnf-detail-person small{display:block;color:#6580a9;margin-top:4px}
+ #rnfSearchClientDetails .rnf-detail-balance{background:#e6f8ed;color:#007d44;padding:17px;border-radius:14px;margin-bottom:18px}#rnfSearchClientDetails .rnf-detail-balance small{display:block;margin-bottom:4px}#rnfSearchClientDetails .rnf-detail-balance strong{font-size:25px}
+ #rnfSearchClientDetails .rnf-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}#rnfSearchClientDetails .rnf-detail-actions button{border:0;border-radius:12px;padding:15px 8px;color:white;font-weight:800;cursor:pointer;background:#00a761}#rnfSearchClientDetails .rnf-detail-actions button:last-child{background:#8133ef}
+}
+@media(max-width:959px){#rnfSearchClientDetails{display:none!important}}
+</style>
+<script id="rnf-pc-search-result-selection">
+(function(){'use strict';
+ const $=id=>document.getElementById(id);
+ function isSelected(){const e=$('psDcgIdentity');return e&&e.querySelector('.rnf-client-info')&&e.textContent.includes('Client trouvé')}
+ function prepare(){if(innerWidth<960)return;const e=$('psDcgIdentity');if(!e)return;const yes=!!isSelected();e.classList.toggle('rnf-result-clickable',yes);if(yes){e.setAttribute('role','button');e.setAttribute('tabindex','0');e.setAttribute('aria-label','Ouvrir la fiche du client trouvé')}else{e.removeAttribute('role');e.removeAttribute('tabindex');e.removeAttribute('aria-label')}}
+ function close(){ $('rnfSearchClientDetails')?.remove() }
+ function open(){if(innerWidth<960||!isSelected())return;close();const el=$('psDcgIdentity');const name=el.querySelector('.rnf-client-info strong')?.textContent?.trim()||'Client';const code=el.querySelector('.rnf-client-info small')?.textContent?.replace(/^Code client\s*:\s*/i,'').trim()||$('psDcgCode')?.value.trim()||'';const balance=el.textContent.match(/([\d\s]+)\s*points/i)?.[1]?.trim()||$('psRpcClient')?.selectedOptions?.[0]?.textContent.match(/—\s*([\d\s]+)\s*pts/i)?.[1]?.trim()||'—';const initials=name.split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();const modal=document.createElement('div');modal.id='rnfSearchClientDetails';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Fiche client');modal.innerHTML='<div class="rnf-detail-shade"></div><section class="rnf-detail-card"><button class="rnf-detail-close" aria-label="Fermer" type="button">×</button><h2>Fiche client</h2><div class="rnf-detail-person"><span class="rnf-detail-avatar"></span><div><strong class="rnf-detail-name"></strong><small class="rnf-detail-code"></small></div></div><div class="rnf-detail-balance"><small>Solde actuel</small><strong class="rnf-detail-points"></strong></div><div class="rnf-detail-actions"><button type="button" data-action="points">+ Ajouter des points</button><button type="button" data-action="reward">🎁 Attribuer une récompense</button></div></section>';modal.querySelector('.rnf-detail-avatar').textContent=initials;modal.querySelector('.rnf-detail-name').textContent=name;modal.querySelector('.rnf-detail-code').textContent='Code client : '+code;modal.querySelector('.rnf-detail-points').textContent=balance+' points';modal.querySelector('.rnf-detail-close').onclick=close;modal.querySelector('.rnf-detail-shade').onclick=close;modal.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>{const action=b.dataset.action;close();$('psDcg'+(action==='points'?'Add':'Give'))?.click()});document.body.append(modal);modal.querySelector('.rnf-detail-close').focus()}
+ document.addEventListener('click',e=>{if(e.target.closest('#psDcgIdentity.rnf-result-clickable'))open()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close();if((e.key==='Enter'||e.key===' ')&&e.target?.id==='psDcgIdentity'&&isSelected()){e.preventDefault();open()}});
+ function start(){const el=$('psDcgIdentity');if(!el)return;prepare();new MutationObserver(prepare).observe(el,{childList:true,subtree:true,characterData:true})}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
 </body></html>
