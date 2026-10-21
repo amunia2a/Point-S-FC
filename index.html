@@ -4643,6 +4643,24 @@ async function doPoints(){const a=accounts.find(x=>x.id===$('psRpcClient')?.valu
  const b=$('psRpcAdd');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_ajouter_points',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_points:points,p_commentaire:'Ajout depuis tableau de bord PC'})});feedback('Points ajoutés. Nouveau solde : '+d[0].nouveau_solde+'.');await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Opération refusée : '+e.message)}finally{b.disabled=false}}
 async function rewards(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value);if(!a){feedback('Choisissez d’abord un client.');return}try{const rs=await api('/rest/v1/recompenses?select=id,titre,cout_points&actif=eq.true&or=(garage_id.is.null,garage_id.eq.'+encodeURIComponent(garageId)+')&order=cout_points.asc');$('psRpcReward').innerHTML='<option value="">Choisir une récompense…</option>'+rs.map(r=>'<option value="'+safe(r.id)+'">'+safe(r.titre)+' — '+safe(r.cout_points)+' pts</option>').join('');feedback(rs.length+' récompenses disponibles.')}catch(e){feedback('Erreur récompenses : '+e.message)}}
 async function redeem(){const a=accounts.find(x=>x.id===$('psRpcClient')?.value),rid=$('psRpcReward')?.value;if(!a||!rid){feedback('Choisissez un client et une récompense.');return}if(!confirm('Attribuer cette récompense et déduire les points du client ?'))return;const b=$('psRpcRedeem');b.disabled=true;try{const d=await api('/rest/v1/rpc/ps_attribuer_recompense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_compte_id:a.id,p_recompense_id:rid,p_commentaire:'Attribution depuis tableau de bord PC'})});feedback('Récompense attribuée. Nouveau solde : '+d[0].nouveau_solde+'.');await refresh();window.dispatchEvent(new Event('ps-rpc-updated'))}catch(e){feedback('Attribution refusée : '+e.message)}finally{b.disabled=false}}
+// Recherche par code, sans exposer les listes de clients dans l'interface PC.
+window.psDesktopFindClient=async function(code){
+ if(!token||!garageId)throw Error('Connectez-vous et sélectionnez un garage.');
+ if(!/^\d{6}$/.test(code))throw Error('Saisissez les 6 chiffres du code client.');
+ const clients=await api('/rest/v1/clients?select=id,prenom,nom,code_client&code_client=eq.'+encodeURIComponent(code)+'&limit=1');
+ if(!clients.length)throw Error('Code client introuvable ou non autorisé.');
+ const found=await api('/rest/v1/comptes_fidelite?select=id,solde_points&client_id=eq.'+encodeURIComponent(clients[0].id)+'&garage_id=eq.'+encodeURIComponent(garageId)+'&limit=1');
+ if(!found.length)throw Error('Aucun compte fidélité pour ce client dans ce garage.');
+ const a={...found[0],clients:clients[0]};
+ if(!accounts.some(x=>x.id===a.id))accounts.push(a);
+ const select=$('psRpcClient');
+ if(!select)throw Error('Gestion fidélité indisponible.');
+ if(!Array.from(select.options).some(o=>o.value===a.id)){
+  const opt=document.createElement('option');opt.value=a.id;opt.textContent=[a.clients.prenom,a.clients.nom].filter(Boolean).join(' ')+' — '+a.solde_points+' pts';select.append(opt);
+ }
+ select.value=a.id;
+ return {nom:[a.clients.prenom,a.clients.nom].filter(Boolean).join(' '),solde:a.solde_points,code};
+};
 function mount(){const p=$('psSbPanel');if(!p||!token)return;if(!$('psRpcArea')){const div=document.createElement('div');div.id='psRpcArea';div.innerHTML='<strong>Gestion fidélité · Supabase</strong><div><select id="psRpcClient" aria-label="Client"></select><input id="psRpcPoints" type="number" min="1" max="100000" placeholder="Points à ajouter" aria-label="Nombre de points"><button id="psRpcAdd" type="button">Ajouter les points</button></div><div><button id="psRpcLoadRewards" type="button">Charger les récompenses</button><select id="psRpcReward" aria-label="Récompense"><option value="">Choisir une récompense…</option></select><button id="psRpcRedeem" type="button">Attribuer la récompense</button></div><p id="psRpcFeedback" role="status"></p>';p.append(div);$('psRpcAdd').onclick=doPoints;$('psRpcLoadRewards').onclick=rewards;$('psRpcRedeem').onclick=redeem;}refresh()}
 window.addEventListener('ps-auth-session',e=>{token=e.detail.merchant?e.detail.token:null;if(!token){$('psRpcArea')?.remove();accounts=[];garageId=null;return}setTimeout(mount,150)});
 document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'&&token)refresh()});
@@ -5831,4 +5849,71 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #merchantMode #mc-dashboard .mc-validated-cards{gap:9px!important;}
 }
 </style>
+
+<!-- Point S : gestion rapide par code client, VERSION PC UNIQUEMENT -->
+<style id="ps-desktop-code-gestion-style">
+@media(min-width:960px){
+ #merchantMode #mc-dashboard .ps-pc-actions{display:none!important}
+ #merchantMode #psDesktopCodeGestion{background:linear-gradient(110deg,#edf6ff 0%,#f7faff 55%,#f3f0ff 100%);border:1px solid #cfe2fa;border-radius:23px;padding:20px 24px;margin:0 0 20px;box-shadow:0 9px 25px rgba(23,77,150,.055);color:#133c79;font-family:ui-rounded,system-ui,sans-serif}
+ #merchantMode .ps-dcg-title{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+ #merchantMode .ps-dcg-symbol{display:grid;place-items:center;background:#deecff;color:#1765c4;width:45px;height:45px;border-radius:14px;font-size:25px}
+ #merchantMode .ps-dcg-title strong{font-size:19px;display:block}
+ #merchantMode .ps-dcg-title small{display:block;color:#6d83a3;font-size:13px;margin-top:3px}
+ #merchantMode .ps-dcg-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+ #merchantMode #psDcgCode,#merchantMode #psDcgPoints,#merchantMode #psDcgReward{background:#fff;border:1px solid #d6e4f4;border-radius:13px;height:45px;padding:0 13px;font:600 14px ui-rounded,system-ui;color:#183e7d;box-sizing:border-box}
+ #merchantMode #psDcgCode{width:190px;letter-spacing:2px}
+ #merchantMode #psDcgPoints{width:155px}
+ #merchantMode #psDcgReward{flex:1;min-width:205px}
+ #merchantMode .ps-dcg-button{height:45px;padding:0 17px;border:0;border-radius:13px;color:white;font:750 14px ui-rounded,system-ui;cursor:pointer;white-space:nowrap;box-shadow:0 5px 11px rgba(12,80,140,.12)}
+ #merchantMode .ps-dcg-button:disabled{opacity:.45;cursor:not-allowed}
+ #merchantMode #psDcgFind{background:#176ac6}
+ #merchantMode #psDcgAdd{background:#079c59}
+ #merchantMode #psDcgGive{background:#7840d3}
+ #merchantMode .ps-dcg-divider{height:1px;background:#dce8f7;margin:15px 0}
+ #merchantMode #psDcgIdentity{font-size:14px;font-weight:700;margin:10px 0;color:#17814d}
+ #merchantMode #psDcgStatus{font-size:13px;color:#667f9d;margin:10px 0 0;min-height:17px}
+}
+@media(max-width:959px){#psDesktopCodeGestion{display:none!important}}
+</style>
+<script id="ps-desktop-code-gestion-script">
+(function(){'use strict';
+ const el=id=>document.getElementById(id);
+ let selectedCode='',selected=false,busy=false;
+ function status(t){if(el('psDcgStatus'))el('psDcgStatus').textContent=t}
+ function enable(){for(const id of ['psDcgAdd','psDcgGive','psDcgPoints','psDcgReward'])if(el(id))el(id).disabled=!selected||busy}
+ function clear(){selected=false;selectedCode='';if(el('psDcgIdentity'))el('psDcgIdentity').textContent='';if(el('psDcgReward'))el('psDcgReward').innerHTML='<option value="">Choisir une récompense…</option>';enable()}
+ async function find(){const code=(el('psDcgCode')?.value||'').trim();clear();if(!/^\d{6}$/.test(code)){status('Saisissez un code client à 6 chiffres.');return}busy=true;el('psDcgFind').disabled=true;status('Recherche du client…');try{
+  const data=await window.psDesktopFindClient(code);
+  selected=true;selectedCode=code;el('psDcgIdentity').textContent='✓ '+data.nom+' · '+data.solde+' points';status('Client identifié : vous pouvez effectuer une opération.');
+  el('psRpcLoadRewards')?.click();
+  const source=el('psRpcReward');if(source){const target=el('psDcgReward');target.innerHTML=source.innerHTML}
+ }catch(e){status(e.message||'Recherche impossible.')}finally{busy=false;el('psDcgFind').disabled=false;enable()}}
+ async function action(type){if(!selected||busy)return;
+  const native=el(type==='points'?'psRpcAdd':'psRpcRedeem');if(!native){status('Gestion fidélité indisponible.');return}
+  if(type==='points')el('psRpcPoints').value=el('psDcgPoints').value;
+  else el('psRpcReward').value=el('psDcgReward').value;
+  if(type==='reward'&&!el('psDcgReward').value){status('Choisissez une récompense.');return}
+  if(type==='points'&&(!Number.isInteger(Number(el('psDcgPoints').value))||Number(el('psDcgPoints').value)<1)){status('Indiquez un nombre de points valide.');return}
+  native.click();status('Confirmez l’opération, puis consultez le résultat ci-dessous.');
+ }
+ function mount(){if(window.innerWidth<960)return;const home=el('psPcHome');if(!home||el('psDesktopCodeGestion'))return;
+  const panel=document.createElement('section');panel.id='psDesktopCodeGestion';panel.innerHTML='<div class="ps-dcg-title"><span class="ps-dcg-symbol">▦</span><div><strong>Gestion fidélité rapide</strong><small>Retrouvez un client avec son code personnel à 6 chiffres</small></div></div><div class="ps-dcg-line"><input id="psDcgCode" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="off" placeholder="Code client · 6 chiffres" aria-label="Code client à 6 chiffres"><button type="button" class="ps-dcg-button" id="psDcgFind">Rechercher</button><span id="psDcgIdentity" role="status"></span></div><div class="ps-dcg-divider"></div><div class="ps-dcg-line"><input id="psDcgPoints" type="number" min="1" max="100000" placeholder="Points à ajouter" aria-label="Points à ajouter" disabled><button type="button" class="ps-dcg-button" id="psDcgAdd" disabled>＋ Ajouter des points</button><select id="psDcgReward" aria-label="Récompense" disabled><option value="">Choisir une récompense…</option></select><button type="button" class="ps-dcg-button" id="psDcgGive" disabled>🎁 Attribuer la récompense</button></div><p id="psDcgStatus" role="status">Saisissez un code pour commencer.</p>';
+  const anchor=home.querySelector('.ps-pc-features');if(anchor)home.insertBefore(panel,anchor);else home.append(panel);
+  el('psDcgFind').addEventListener('click',find);
+  el('psDcgCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();find()}});
+  el('psDcgCode').addEventListener('input',()=>{clear();status('Saisissez le code puis cliquez sur Rechercher.')});
+  el('psDcgAdd').addEventListener('click',()=>action('points'));
+  el('psDcgGive').addEventListener('click',()=>action('reward'));
+  // Le menu natif conserve les RPC sécurisées et les droits Supabase existants.
+  const obs=new MutationObserver(()=>{if(!selected)return;const source=el('psRpcReward'),target=el('psDcgReward');if(source&&target&&source.options.length>1&&target.options.length<=1)target.innerHTML=source.innerHTML});
+  const native=el('psRpcArea');if(native)obs.observe(native,{childList:true,subtree:true});
+ }
+ document.addEventListener('DOMContentLoaded',mount);
+ if(document.readyState!=='loading')mount();
+ window.addEventListener('ps-auth-session',()=>{clear();status('Saisissez un code pour commencer.')});
+ document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'){clear();status('Garage modifié : recherchez le code client à nouveau.')}});
+ window.addEventListener('ps-rpc-updated',()=>{if(selectedCode){const code=selectedCode;setTimeout(()=>{if(el('psDcgCode')?.value===code)find()},350)}});
+ const mo=new MutationObserver(()=>{if(window.innerWidth>=960&&!el('psDesktopCodeGestion')&&el('psPcHome'))mount()});mo.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
