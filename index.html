@@ -5980,22 +5980,60 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script id="rnf-pc-final-approved-script">
 (function(){'use strict';
  const $=id=>document.getElementById(id);
- function enhance(){const panel=$('psDesktopCodeGestion');if(!panel||panel.dataset.rnfApproved)return;panel.dataset.rnfApproved='1';
- const sub=panel.querySelector('.ps-dcg-title small');if(sub)sub.textContent='Recherchez un client par son code à 6 chiffres ou par son nom';
- const input=$('psDcgCode');if(input){input.placeholder='Code client (6 chiffres) ou nom du client…';input.removeAttribute('maxlength');input.removeAttribute('pattern');input.setAttribute('aria-label','Rechercher par code ou nom');}
- const button=$('psDcgFind');if(button){button.textContent='⌕  Rechercher';
- // The existing code lookup remains the secure path. Non-numeric search resolves a client to its code, then delegates to the existing lookup.
- button.addEventListener('click',async e=>{const q=input?.value.trim()||'';if(/^\d{6}$/.test(q))return;e.stopImmediatePropagation();e.preventDefault();
- if(!q){$('psDcgStatus').textContent='Saisissez un code ou un nom.';return}
- button.disabled=true;try{const result=await window.psDesktopSearchClient(q);input.value=result.code;button.click();input.value=q;}catch(err){$('psDcgStatus').textContent=err.message||'Recherche impossible.'}finally{button.disabled=false}
- },true);
- input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/^\d{6}$/.test(input.value.trim())){e.preventDefault();e.stopImmediatePropagation();button.click()}},true);
+ const icons={plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18M12 9H7a3 3 0 1 1 3-3c0 2 2 3 2 3Zm0 0h5a3 3 0 1 0-3-3c0 2-2 3-2 3Z"/></svg>',check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m5 12 5 5L20 7"/></svg>'};
+ let currentName='',currentCode='',modalOpen=false;
+ function hideModal(){const m=$('rnfDesktopModal');if(m)m.remove();modalOpen=false}
+ function alertStatus(t){const e=$('psDcgStatus');if(e)e.textContent=t}
+ function displayClient(){const label=$('psDcgIdentity');if(!label)return;const raw=label.textContent.trim();if(!raw||raw.indexOf('✓')!==0)return;const match=raw.match(/^✓\s*(.*?)\s*·\s*([\d\s]+)\s*points/i);currentName=(match?match[1]:raw.replace(/^✓\s*/,''));const q=$('psDcgCode')?.value.trim()||'';currentCode=/^\d{6}$/.test(q)?q:currentCode;label.innerHTML='<span class="rnf-client-avatar" aria-hidden="true">'+(currentName.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())+'</span><span class="rnf-client-info"><strong>'+escapeHtml(currentName)+'</strong><small>Code client : '+escapeHtml(currentCode)+'</small></span><span class="rnf-found">'+icons.check+' Client trouvé</span>'}
+ function escapeHtml(t){return String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function showModal(type){if(window.innerWidth<960)return;const btn=$('psDcg'+(type==='points'?'Add':'Give'));if(!btn||btn.disabled)return;hideModal();modalOpen=true;
+ const isPoints=type==='points', title=isPoints?'Ajouter des points':'Attribuer une récompense';const modal=document.createElement('div');modal.id='rnfDesktopModal';modal.className=isPoints?'rnf-modal-points':'rnf-modal-reward';modal.innerHTML='<div class="rnf-modal-backdrop" data-close="1"></div><section class="rnf-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="rnfModalTitle"><header class="rnf-modal-header"><span class="rnf-modal-icon">'+(isPoints?icons.plus:icons.gift)+'</span><h2 id="rnfModalTitle">'+title+'</h2><button type="button" class="rnf-modal-close" data-close="1" aria-label="Fermer">×</button></header><div class="rnf-modal-client"><span class="rnf-client-avatar">'+escapeHtml(currentName.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())+'</span><span><strong>'+escapeHtml(currentName)+'</strong><small>Code client : '+escapeHtml(currentCode)+'</small></span></div><div class="rnf-modal-form">'+(isPoints?'<label for="rnfModalAmount">Nombre de points à attribuer</label><input id="rnfModalAmount" type="number" min="1" max="100000" step="1" placeholder="Ex. 100" inputmode="numeric"/>':'<label for="rnfModalReward">Récompense à attribuer</label><select id="rnfModalReward"><option value="">Chargement des récompenses…</option></select>')+'</div><p id="rnfModalError" role="alert"></p><footer class="rnf-modal-footer"><button type="button" class="rnf-modal-cancel" data-close="1">Annuler</button><button type="button" class="rnf-modal-confirm">'+icons.check+' '+(isPoints?'Valider les points':'Valider la récompense')+'</button></footer></section>';document.body.append(modal);
+ modal.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',hideModal));const confirm=modal.querySelector('.rnf-modal-confirm');const error=$('rnfModalError');
+ if(!isPoints){const native=$('psRpcLoadRewards');native?.click();const update=()=>{if(!modal.isConnected)return;const source=$('psRpcReward'),target=$('rnfModalReward');if(source?.options.length>1){target.innerHTML=source.innerHTML}else target.innerHTML='<option value="">Aucune récompense disponible</option>'};update();setTimeout(update,350);setTimeout(update,1100)}else $('rnfModalAmount')?.focus();
+ confirm.addEventListener('click',()=>{if(isPoints){const n=Number($('rnfModalAmount')?.value);if(!Number.isInteger(n)||n<1||n>100000){error.textContent='Saisissez un nombre entier de 1 à 100 000.';return}const input=$('psRpcPoints'),native=$('psRpcAdd');if(!input||!native){error.textContent='Action sécurisée indisponible.';return}input.value=String(n);hideModal();native.click()}else{const chosen=$('rnfModalReward')?.value,select=$('psRpcReward'),native=$('psRpcRedeem');if(!chosen){error.textContent='Choisissez une récompense.';return}if(!select||!native){error.textContent='Action sécurisée indisponible.';return}select.value=chosen;hideModal();native.click()}});
+ const esc=e=>{if(e.key==='Escape'){hideModal();document.removeEventListener('keydown',esc)}};document.addEventListener('keydown',esc);
  }
- const add=$('psDcgAdd'),give=$('psDcgGive');if(add){add.textContent='＋  Ajouter des points';add.addEventListener('click',e=>{if(add.disabled)return;e.stopImmediatePropagation();const amount=prompt('Combien de points souhaitez-vous ajouter ?');if(amount===null)return;const n=Number(amount);if(!Number.isInteger(n)||n<1||n>100000){$('psDcgStatus').textContent='Saisissez un nombre entier entre 1 et 100 000.';return}$('psDcgPoints').value=String(n);const native=$('psRpcAdd');if(native)native.click();else $('psDcgStatus').textContent='Action sécurisée indisponible.'},true)}
- if(give){give.textContent='♔  Attribuer une récompense';give.addEventListener('click',async e=>{if(give.disabled)return;e.stopImmediatePropagation();const nativeLoad=$('psRpcLoadRewards');nativeLoad?.click();await new Promise(resolve=>setTimeout(resolve,350));const select=$('psRpcReward');if(!select||select.options.length<2){$('psDcgStatus').textContent='Aucune récompense disponible ou chargement en cours. Réessayez.';return}const options=Array.from(select.options).slice(1);const choice=prompt('Choisissez une récompense en indiquant son numéro :\n'+options.map((o,i)=>(i+1)+'. '+o.textContent).join('\n'));if(choice===null)return;const index=Number(choice)-1;if(!Number.isInteger(index)||index<0||index>=options.length){$('psDcgStatus').textContent='Numéro de récompense invalide.';return}select.value=options[index].value;const native=$('psRpcRedeem');if(native)native.click()},true)}
+ function enhance(){const panel=$('psDesktopCodeGestion');if(!panel||panel.dataset.rnfPopup)return;panel.dataset.rnfPopup='1';const title=panel.querySelector('.ps-dcg-title strong');if(title)title.textContent='Fidélité - moteur de recherche';const sub=panel.querySelector('.ps-dcg-title small');if(sub)sub.textContent='Recherchez un client pour gérer ses points et ses récompenses.';
+ const input=$('psDcgCode'),button=$('psDcgFind');if(input){input.placeholder="Code client (6 chiffres), nom, téléphone ou plaque d’immatriculation…";input.removeAttribute('maxlength');input.removeAttribute('pattern');input.setAttribute('aria-label','Rechercher un client');}
+ if(button){button.innerHTML='<span class="rnf-search-icon">⌕</span> Rechercher';button.addEventListener('click',async e=>{const q=input?.value.trim()||'';if(/^\d{6}$/.test(q)){currentCode=q;return}e.stopImmediatePropagation();e.preventDefault();if(!q){alertStatus('Saisissez un code ou un nom.');return}button.disabled=true;try{const result=await window.psDesktopSearchClient(q);currentCode=result.code;input.value=result.code;button.click();input.value=q}catch(err){alertStatus(err.message||'Recherche impossible.')}finally{button.disabled=false}},true);
+ input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/^\d{6}$/.test(input.value.trim())){e.preventDefault();e.stopImmediatePropagation();button.click()}},true)}
+ const add=$('psDcgAdd'),give=$('psDcgGive');if(add){add.innerHTML=icons.plus+' Ajouter des points';add.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('points')},true)}if(give){give.innerHTML=icons.gift+' Attribuer une récompense';give.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('reward')},true)}
+ const identity=$('psDcgIdentity');if(identity){new MutationObserver(()=>{if(!identity.querySelector('.rnf-client-info'))displayClient()}).observe(identity,{childList:true,characterData:true,subtree:true})}
  }
- const obs=new MutationObserver(()=>{if(window.innerWidth>=960)enhance()});obs.observe(document.documentElement,{childList:true,subtree:true});
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
+ const observer=new MutationObserver(()=>{if(window.innerWidth>=960)enhance()});observer.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
 })();
 </script>
+<style id="rnf-pc-popup-approved-20261021">
+@media(min-width:960px){
+ #merchantMode #psDesktopCodeGestion .ps-dcg-title strong{font-size:23px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgIdentity:empty{display:none!important}
+ #merchantMode #psDesktopCodeGestion #psDcgIdentity:not(:empty){display:flex!important;align-items:center;gap:13px;background:rgba(255,255,255,.65);border:1px solid #e1ebfc;border-radius:15px;padding:12px 18px;margin:14px 0 0!important;color:#143c7b!important}
+ #merchantMode #psDesktopCodeGestion #psDcgIdentity .rnf-client-info{display:flex;flex-direction:column;gap:3px;flex:1}
+ #merchantMode #psDesktopCodeGestion #psDcgIdentity .rnf-client-info small{color:#6680a9;font-size:13px}
+ #merchantMode #psDesktopCodeGestion #psDcgStatus{display:none!important}
+ #merchantMode #psDesktopCodeGestion #psDcgStatus:not(:empty){display:block!important;font-size:12px!important;color:#6b82a5!important}
+ #merchantMode #psDesktopCodeGestion #psDcgAdd,#merchantMode #psDesktopCodeGestion #psDcgGive{display:flex!important;align-items:center;justify-content:center;gap:12px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgAdd svg,#merchantMode #psDesktopCodeGestion #psDcgGive svg{height:27px;width:27px}
+}
+.rnf-client-avatar{display:grid;place-items:center;flex-shrink:0;width:47px;height:47px;border-radius:50%;background:#efe7ff;color:#7c37cf;font-size:17px;font-weight:800}
+.rnf-found{display:flex;align-items:center;gap:6px;background:#dafbe4;color:#078044;border-radius:50px;padding:9px 15px;font-size:13px;font-weight:750}.rnf-found svg{height:17px;width:17px}
+#rnfDesktopModal{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;font-family:ui-rounded,system-ui,sans-serif;box-sizing:border-box}
+#rnfDesktopModal .rnf-modal-backdrop{position:absolute;inset:0;background:rgba(14,31,59,.62);backdrop-filter:blur(3px)}
+#rnfDesktopModal .rnf-modal-dialog{position:relative;width:min(100%,500px);box-sizing:border-box;background:#fff;border-radius:19px;padding:22px;box-shadow:0 22px 70px rgba(10,33,76,.25);color:#10316a}
+#rnfDesktopModal .rnf-modal-header{display:flex;align-items:center;gap:13px;margin-bottom:18px}
+#rnfDesktopModal .rnf-modal-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#e3f8ed;color:#00a45e}
+#rnfDesktopModal.rnf-modal-reward .rnf-modal-icon{background:#f2e9ff;color:#8638ea}
+#rnfDesktopModal svg{width:25px;height:25px}#rnfDesktopModal h2{font-size:21px;margin:0;flex:1;color:#082f70}
+#rnfDesktopModal .rnf-modal-close{border:0;background:none;color:#3665a3;font-size:29px;cursor:pointer}
+#rnfDesktopModal .rnf-modal-client{display:flex;gap:13px;align-items:center;padding:13px 15px;border-radius:13px;background:#eff6ff;margin-bottom:18px}
+#rnfDesktopModal .rnf-modal-client>span:last-child{display:flex;flex-direction:column;gap:3px}#rnfDesktopModal .rnf-modal-client small{color:#6682ab;font-size:13px}
+#rnfDesktopModal .rnf-modal-form label{display:block;font-weight:750;font-size:14px;margin-bottom:8px}
+#rnfDesktopModal .rnf-modal-form input,#rnfDesktopModal .rnf-modal-form select{box-sizing:border-box;width:100%;height:49px;border:1px solid #c9dcf6;border-radius:11px;background:#fff;padding:0 13px;font-size:15px;color:#133a77}
+#rnfDesktopModal #rnfModalError{color:#ba2739;min-height:16px;font-size:13px}
+#rnfDesktopModal .rnf-modal-footer{display:flex;gap:12px;margin-top:8px}#rnfDesktopModal .rnf-modal-footer button{border-radius:11px;padding:13px 14px;font-size:15px;font-weight:750;cursor:pointer}
+#rnfDesktopModal .rnf-modal-cancel{border:1px solid #b7cff0;background:white;color:#123b7d;min-width:125px}
+#rnfDesktopModal .rnf-modal-confirm{border:0;display:flex;gap:8px;align-items:center;justify-content:center;flex:1;color:#fff;background:#00a45e}
+#rnfDesktopModal.rnf-modal-reward .rnf-modal-confirm{background:#8234e9}#rnfDesktopModal .rnf-modal-confirm svg{width:20px;height:20px}
+@media(max-width:959px){#rnfDesktopModal{display:none!important}}
+</style>
 </body></html>
