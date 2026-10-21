@@ -4661,6 +4661,27 @@ window.psDesktopFindClient=async function(code){
  select.value=a.id;
  return {nom:[a.clients.prenom,a.clients.nom].filter(Boolean).join(' '),solde:a.solde_points,code};
 };
+window.psDesktopSearchClient=async function(term){
+ if(!token||!garageId)throw Error('Connectez-vous et sélectionnez un garage.');
+ const q=String(term||'').trim();if(q.length<2)throw Error('Saisissez au moins deux caractères.');
+ if(/^\d{6}$/.test(q))return window.psDesktopFindClient(q);
+ const normalized=q.replace(/[,%()]/g,' ').trim();
+ const terms=normalized.split(/\s+/).filter(Boolean);
+ const filters=['prenom.ilike.*'+encodeURIComponent(terms[0])+'*','nom.ilike.*'+encodeURIComponent(terms[0])+'*'];
+ let candidates=[];
+ try{candidates=await api('/rest/v1/clients?select=id,prenom,nom,code_client&or=('+filters.join(',')+')&limit=40')}catch(e){throw Error('Recherche indisponible : '+e.message)}
+ const name=normalized.toLocaleLowerCase('fr');
+ let matches=candidates.filter(c=>[c.prenom,c.nom].filter(Boolean).join(' ').toLocaleLowerCase('fr').includes(name)||[c.nom,c.prenom].filter(Boolean).join(' ').toLocaleLowerCase('fr').includes(name));
+ if(!matches.length)matches=candidates;
+ const valid=[];
+ for(const c of matches.slice(0,15)){
+  const ac=await api('/rest/v1/comptes_fidelite?select=id,solde_points&client_id=eq.'+encodeURIComponent(c.id)+'&garage_id=eq.'+encodeURIComponent(garageId)+'&limit=1');
+  if(ac.length)valid.push({client:c,account:ac[0]});
+ }
+ if(!valid.length)throw Error('Aucun client correspondant dans ce garage. Pour un numéro de téléphone ou une plaque, ouvrez la fiche Clients si ces champs sont enregistrés.');
+ if(valid.length>1)throw Error(valid.length+' clients correspondent. Précisez le nom ou utilisez le code à 6 chiffres.');
+ return window.psDesktopFindClient(valid[0].client.code_client);
+};
 function mount(){const p=$('psSbPanel');if(!p||!token)return;if(!$('psRpcArea')){const div=document.createElement('div');div.id='psRpcArea';div.innerHTML='<strong>Gestion fidélité · Supabase</strong><div><select id="psRpcClient" aria-label="Client"></select><input id="psRpcPoints" type="number" min="1" max="100000" placeholder="Points à ajouter" aria-label="Nombre de points"><button id="psRpcAdd" type="button">Ajouter les points</button></div><div><button id="psRpcLoadRewards" type="button">Charger les récompenses</button><select id="psRpcReward" aria-label="Récompense"><option value="">Choisir une récompense…</option></select><button id="psRpcRedeem" type="button">Attribuer la récompense</button></div><p id="psRpcFeedback" role="status"></p>';p.append(div);$('psRpcAdd').onclick=doPoints;$('psRpcLoadRewards').onclick=rewards;$('psRpcRedeem').onclick=redeem;}refresh()}
 window.addEventListener('ps-auth-session',e=>{token=e.detail.merchant?e.detail.token:null;if(!token){$('psRpcArea')?.remove();accounts=[];garageId=null;return}setTimeout(mount,150)});
 document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'&&token)refresh()});
@@ -5924,4 +5945,57 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #merchantMode #mc-dashboard #psSbPanel { display: none !important; }
 }
 </style>
+
+<!-- RNF : maquette PC validée, sans toucher au mobile ni aux RPC sécurisées -->
+<style id="rnf-pc-final-approved-style">
+@media(min-width:960px){
+ #merchantMode #psPcHome .ps-pc-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;margin-bottom:16px!important}
+ #merchantMode #psPcHome .ps-pc-metric:nth-child(2){display:none!important}
+ #merchantMode #psPcHome .ps-pc-metric{min-height:112px!important;padding:18px 22px!important;border-radius:22px!important;box-shadow:0 10px 24px rgba(34,91,160,.055)!important}
+ #merchantMode #psPcHome .ps-pc-metric .ps-pc-icon{width:68px!important;height:68px!important;border-radius:24px!important;font-size:30px!important}
+ #merchantMode #psPcHome .ps-pc-metric b{font-size:33px!important}
+ #merchantMode #psPcHome .ps-pc-features{display:none!important}
+ #merchantMode #psPcHome .ps-pc-bottom{grid-template-columns:1fr!important}
+ #merchantMode #psPcHome .ps-pc-bottom>.ps-pc-card:nth-child(2){display:none!important}
+ #merchantMode #psPcHome .ps-pc-bottom>.ps-pc-card{padding:21px 24px!important;border-radius:22px!important}
+ #merchantMode #psPcHome #psPcRecentClients .ps-pc-row{min-height:44px!important;border-bottom:1px solid #e5eef9!important;display:flex!important;align-items:center!important;justify-content:space-between!important}
+ #merchantMode #psDesktopCodeGestion{padding:22px 25px!important;margin-bottom:18px!important;background:linear-gradient(115deg,#edf7ff,#f1f5ff 60%,#f5f0ff)!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-title{margin-bottom:15px!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-symbol{width:60px!important;height:60px!important;border-radius:50%!important;background:#dceeff!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-title strong{font-size:23px!important;color:#073b94!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-title small{font-size:14px!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-line{gap:14px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgCode{width:auto!important;flex:1!important;letter-spacing:normal!important;height:56px!important;font-size:15px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgFind{height:56px!important;min-width:185px!important;font-size:16px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgPoints,#merchantMode #psDesktopCodeGestion #psDcgReward{display:none!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-divider{display:none!important}
+ #merchantMode #psDesktopCodeGestion .ps-dcg-line:last-of-type{margin-top:18px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:18px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgAdd,#merchantMode #psDesktopCodeGestion #psDcgGive{width:100%!important;height:68px!important;font-size:19px!important;border-radius:15px!important}
+ #merchantMode #psDesktopCodeGestion #psDcgAdd{background:#04aa62!important}
+ #merchantMode #psDesktopCodeGestion #psDcgGive{background:#8136ef!important}
+ #merchantMode #psDesktopCodeGestion #psDcgStatus{margin:10px 0 0!important}
+ #merchantMode #psDesktopCodeGestion #psDcgIdentity{margin:5px 0!important}
+}
+</style>
+<script id="rnf-pc-final-approved-script">
+(function(){'use strict';
+ const $=id=>document.getElementById(id);
+ function enhance(){const panel=$('psDesktopCodeGestion');if(!panel||panel.dataset.rnfApproved)return;panel.dataset.rnfApproved='1';
+ const sub=panel.querySelector('.ps-dcg-title small');if(sub)sub.textContent='Recherchez un client par son code à 6 chiffres ou par son nom';
+ const input=$('psDcgCode');if(input){input.placeholder='Code client (6 chiffres) ou nom du client…';input.removeAttribute('maxlength');input.removeAttribute('pattern');input.setAttribute('aria-label','Rechercher par code ou nom');}
+ const button=$('psDcgFind');if(button){button.textContent='⌕  Rechercher';
+ // The existing code lookup remains the secure path. Non-numeric search resolves a client to its code, then delegates to the existing lookup.
+ button.addEventListener('click',async e=>{const q=input?.value.trim()||'';if(/^\d{6}$/.test(q))return;e.stopImmediatePropagation();e.preventDefault();
+ if(!q){$('psDcgStatus').textContent='Saisissez un code ou un nom.';return}
+ button.disabled=true;try{const result=await window.psDesktopSearchClient(q);input.value=result.code;button.click();input.value=q;}catch(err){$('psDcgStatus').textContent=err.message||'Recherche impossible.'}finally{button.disabled=false}
+ },true);
+ input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/^\d{6}$/.test(input.value.trim())){e.preventDefault();e.stopImmediatePropagation();button.click()}},true);
+ }
+ const add=$('psDcgAdd'),give=$('psDcgGive');if(add){add.textContent='＋  Ajouter des points';add.addEventListener('click',e=>{if(add.disabled)return;e.stopImmediatePropagation();const amount=prompt('Combien de points souhaitez-vous ajouter ?');if(amount===null)return;const n=Number(amount);if(!Number.isInteger(n)||n<1||n>100000){$('psDcgStatus').textContent='Saisissez un nombre entier entre 1 et 100 000.';return}$('psDcgPoints').value=String(n);const native=$('psRpcAdd');if(native)native.click();else $('psDcgStatus').textContent='Action sécurisée indisponible.'},true)}
+ if(give){give.textContent='♔  Attribuer une récompense';give.addEventListener('click',async e=>{if(give.disabled)return;e.stopImmediatePropagation();const nativeLoad=$('psRpcLoadRewards');nativeLoad?.click();await new Promise(resolve=>setTimeout(resolve,350));const select=$('psRpcReward');if(!select||select.options.length<2){$('psDcgStatus').textContent='Aucune récompense disponible ou chargement en cours. Réessayez.';return}const options=Array.from(select.options).slice(1);const choice=prompt('Choisissez une récompense en indiquant son numéro :\n'+options.map((o,i)=>(i+1)+'. '+o.textContent).join('\n'));if(choice===null)return;const index=Number(choice)-1;if(!Number.isInteger(index)||index<0||index>=options.length){$('psDcgStatus').textContent='Numéro de récompense invalide.';return}select.value=options[index].value;const native=$('psRpcRedeem');if(native)native.click()},true)}
+ }
+ const obs=new MutationObserver(()=>{if(window.innerWidth>=960)enhance()});obs.observe(document.documentElement,{childList:true,subtree:true});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
+})();
+</script>
 </body></html>
