@@ -4665,22 +4665,49 @@ window.psDesktopSearchClient=async function(term){
  if(!token||!garageId)throw Error('Connectez-vous et sélectionnez un garage.');
  const q=String(term||'').trim();if(q.length<2)throw Error('Saisissez au moins deux caractères.');
  if(/^\d{6}$/.test(q))return window.psDesktopFindClient(q);
- const normalized=q.replace(/[,%()]/g,' ').trim();
- const terms=normalized.split(/\s+/).filter(Boolean);
- const filters=['prenom.ilike.*'+encodeURIComponent(terms[0])+'*','nom.ilike.*'+encodeURIComponent(terms[0])+'*'];
- let candidates=[];
- try{candidates=await api('/rest/v1/clients?select=id,prenom,nom,code_client&or=('+filters.join(',')+')&limit=40')}catch(e){throw Error('Recherche indisponible : '+e.message)}
- const name=normalized.toLocaleLowerCase('fr');
- let matches=candidates.filter(c=>[c.prenom,c.nom].filter(Boolean).join(' ').toLocaleLowerCase('fr').includes(name)||[c.nom,c.prenom].filter(Boolean).join(' ').toLocaleLowerCase('fr').includes(name));
- if(!matches.length)matches=candidates;
- const valid=[];
- for(const c of matches.slice(0,15)){
-  const ac=await api('/rest/v1/comptes_fidelite?select=id,solde_points&client_id=eq.'+encodeURIComponent(c.id)+'&garage_id=eq.'+encodeURIComponent(garageId)+'&limit=1');
-  if(ac.length)valid.push({client:c,account:ac[0]});
+ const clean=q.replace(/[,%()]/g,' ').trim(), esc=encodeURIComponent;
+ const results=new Map(), plateIds=new Set();
+ async function addClients(list){for(const c of list||[])if(c?.id)results.set(c.id,c)}
+ // The clients and vehicules tables already exist in the app. RLS is enforced by Supabase.
+ const chunks=clean.split(/\s+/).filter(Boolean);
+ const queryNames=chunks.map(t=>t.replace(/[^\p{L}\p{N}'-]/gu,'')).filter(Boolean);
+ let failures=[];
+ for(const part of queryNames.slice(0,3)){
+  try{await addClients(await api('/rest/v1/clients?select=id,prenom,nom,code_client,telephone&or=(prenom.ilike.*'+esc(part)+'*,nom.ilike.*'+esc(part)+'*)&limit=100'))}catch(e){failures.push(e)}
  }
- if(!valid.length)throw Error('Aucun client correspondant dans ce garage. Pour un numéro de téléphone ou une plaque, ouvrez la fiche Clients si ces champs sont enregistrés.');
- if(valid.length>1)throw Error(valid.length+' clients correspondent. Précisez le nom ou utilisez le code à 6 chiffres.');
- return window.psDesktopFindClient(valid[0].client.code_client);
+ const digits=clean.replace(/\D/g,'');
+ if(digits.length>=3){
+  try{await addClients(await api('/rest/v1/clients?select=id,prenom,nom,code_client,telephone&telephone=ilike.*'+esc(digits)+'*&limit=100'))}catch(e){failures.push(e)}
+ }
+ const plate=clean.toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(plate.length>=3){
+  try{
+   const cars=await api('/rest/v1/vehicules?select=client_id,immatriculation&immatriculation=ilike.*'+esc(plate)+'*&limit=100');
+   const ids=[...new Set(cars.map(v=>v.client_id).filter(Boolean))];ids.forEach(id=>plateIds.add(id));
+   if(ids.length){await addClients(await api('/rest/v1/clients?select=id,prenom,nom,code_client,telephone&id=in.('+ids.map(esc).join(',')+')&limit=100'))}
+  }catch(e){failures.push(e)}
+  // Some registrations include separators (AA-123-AA); search compact forms in a bounded result set.
+  if(!results.size){try{
+   const cars=await api('/rest/v1/vehicules?select=client_id,immatriculation&limit=500');
+   const ids=[...new Set(cars.filter(v=>String(v.immatriculation||'').toUpperCase().replace(/[^A-Z0-9]/g,'').includes(plate)).map(v=>v.client_id).filter(Boolean))];ids.forEach(id=>plateIds.add(id));
+   if(ids.length)await addClients(await api('/rest/v1/clients?select=id,prenom,nom,code_client,telephone&id=in.('+ids.map(esc).join(',')+')&limit=100'));
+  }catch(e){failures.push(e)}}
+ }
+ const text=clean.toLocaleLowerCase('fr');
+ const matches=[...results.values()].filter(c=>{
+  const full=[c.prenom,c.nom].filter(Boolean).join(' ').toLocaleLowerCase('fr');
+  const reverse=[c.nom,c.prenom].filter(Boolean).join(' ').toLocaleLowerCase('fr');
+  const phone=String(c.telephone||'').replace(/\D/g,'');
+  return full.includes(text)||reverse.includes(text)||queryNames.every(t=>full.includes(t.toLocaleLowerCase('fr')))||digits.length>=3&&phone.includes(digits)||plateIds.has(c.id);
+ });
+ const valid=[];
+ for(const c of matches.slice(0,100)){
+  try{const ac=await api('/rest/v1/comptes_fidelite?select=id,solde_points&client_id=eq.'+esc(c.id)+'&garage_id=eq.'+esc(garageId)+'&limit=1');if(ac.length)valid.push({client:c,account:ac[0]})}catch(e){failures.push(e)}
+ }
+ if(!valid.length)throw Error(failures.length&&results.size===0?'Recherche impossible : '+failures[0].message:'Aucun client correspondant dans ce garage.');
+ if(valid.length===1)return window.psDesktopFindClient(valid[0].client.code_client);
+ // Let the merchant select the intended customer; never act on an ambiguous match.
+ return {choices:valid.map(v=>({nom:[v.client.prenom,v.client.nom].filter(Boolean).join(' '),code:v.client.code_client,telephone:v.client.telephone||''}))};
 };
 function mount(){const p=$('psSbPanel');if(!p||!token)return;if(!$('psRpcArea')){const div=document.createElement('div');div.id='psRpcArea';div.innerHTML='<strong>Gestion fidélité · Supabase</strong><div><select id="psRpcClient" aria-label="Client"></select><input id="psRpcPoints" type="number" min="1" max="100000" placeholder="Points à ajouter" aria-label="Nombre de points"><button id="psRpcAdd" type="button">Ajouter les points</button></div><div><button id="psRpcLoadRewards" type="button">Charger les récompenses</button><select id="psRpcReward" aria-label="Récompense"><option value="">Choisir une récompense…</option></select><button id="psRpcRedeem" type="button">Attribuer la récompense</button></div><p id="psRpcFeedback" role="status"></p>';p.append(div);$('psRpcAdd').onclick=doPoints;$('psRpcLoadRewards').onclick=rewards;$('psRpcRedeem').onclick=redeem;}refresh()}
 window.addEventListener('ps-auth-session',e=>{token=e.detail.merchant?e.detail.token:null;if(!token){$('psRpcArea')?.remove();accounts=[];garageId=null;return}setTimeout(mount,150)});
@@ -5995,7 +6022,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  }
  function enhance(){const panel=$('psDesktopCodeGestion');if(!panel||panel.dataset.rnfPopup)return;panel.dataset.rnfPopup='1';const title=panel.querySelector('.ps-dcg-title strong');if(title)title.textContent='Fidélité - moteur de recherche';const sub=panel.querySelector('.ps-dcg-title small');if(sub)sub.textContent='Recherchez un client pour gérer ses points et ses récompenses.';
  const input=$('psDcgCode'),button=$('psDcgFind');if(input){input.placeholder="Code client (6 chiffres), nom, téléphone ou plaque d’immatriculation…";input.removeAttribute('maxlength');input.removeAttribute('pattern');input.setAttribute('aria-label','Rechercher un client');}
- if(button){button.innerHTML='<span class="rnf-search-icon">⌕</span> Rechercher';button.addEventListener('click',async e=>{const q=input?.value.trim()||'';if(/^\d{6}$/.test(q)){currentCode=q;return}e.stopImmediatePropagation();e.preventDefault();if(!q){alertStatus('Saisissez un code ou un nom.');return}button.disabled=true;try{const result=await window.psDesktopSearchClient(q);currentCode=result.code;input.value=result.code;button.click();input.value=q}catch(err){alertStatus(err.message||'Recherche impossible.')}finally{button.disabled=false}},true);
+ if(button){button.innerHTML='<span class="rnf-search-icon">⌕</span> Rechercher';button.addEventListener('click',async e=>{const q=input?.value.trim()||'';if(/^\d{6}$/.test(q)){currentCode=q;return}e.stopImmediatePropagation();e.preventDefault();if(!q){alertStatus('Saisissez un code ou un nom.');return}button.disabled=true;try{const result=await window.psDesktopSearchClient(q);if(result.choices){window.rnfShowClientChoices(result.choices,code=>{input.value=code;currentCode=code;button.disabled=false;button.click()});return}currentCode=result.code;input.value=result.code;button.disabled=false;button.click()}catch(err){alertStatus(err.message||'Recherche impossible.')}finally{button.disabled=false}},true);
  input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/^\d{6}$/.test(input.value.trim())){e.preventDefault();e.stopImmediatePropagation();button.click()}},true)}
  const add=$('psDcgAdd'),give=$('psDcgGive');if(add){add.innerHTML=icons.plus+' Ajouter des points';add.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('points')},true)}if(give){give.innerHTML=icons.gift+' Attribuer une récompense';give.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();showModal('reward')},true)}
  const identity=$('psDcgIdentity');if(identity){new MutationObserver(()=>{if(!identity.querySelector('.rnf-client-info'))displayClient()}).observe(identity,{childList:true,characterData:true,subtree:true})}
@@ -6075,6 +6102,51 @@ window.addEventListener('rnf-fidelite-operation-ok',event=>{if(window.innerWidth
  modal.innerHTML='<section class="rnf-success-card"><div class="rnf-success-check">✓</div><h2>'+(type==='points'?'Points ajoutés !':'Récompense attribuée !')+'</h2><p>'+desc+'</p><div class="rnf-new-balance"><small>Nouveau solde</small><strong>'+d.solde.toLocaleString('fr-FR')+' points</strong></div><button type="button">OK</button></section>';
  document.body.appendChild(modal);const colors=['#008de7','#00a65c','#8133ef','#f7c74d','#ef4ab8'];const card=modal.querySelector('.rnf-success-card');for(let i=0;i<28;i++){const bit=document.createElement('i');bit.className='rnf-confetti';bit.style.left=((i*37+11)%100)+'%';bit.style.background=colors[i%colors.length];bit.style.animationDelay=((i*13)%11)/12+'s';card.appendChild(bit)}modal.querySelector('button').focus();modal.querySelector('button').addEventListener('click',()=>modal.remove());
 });
+})();
+</script>
+
+<style id="rnf-desktop-final-cards-icons">
+@media(min-width:960px){
+ #merchantMode #psPcHome .ps-pc-grid{display:none!important}
+ #merchantMode #psPcHome .ps-pc-features{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:16px!important;margin:0 0 18px!important}
+ #merchantMode #psPcHome .ps-pc-feature{min-height:132px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:8px!important;border-radius:22px!important;padding:17px!important}
+ #merchantMode #psPcHome .ps-pc-feature .ps-pc-icon{height:72px!important;width:72px!important;border-radius:22px!important;display:grid!important;place-items:center!important;font-size:0!important}
+ #merchantMode #psPcHome .ps-pc-feature .ps-pc-icon svg{width:40px!important;height:40px!important;stroke-width:1.9!important}
+ #merchantMode #psPcHome .ps-pc-feature b{font-size:19px!important}
+ #merchantMode #psPcHome .ps-pc-feature small{font-size:13px!important}
+ #merchantMode #psPcHome .ps-pc-bottom{grid-template-columns:1fr!important}
+ #merchantMode #psPcHome #psDesktopCodeGestion{margin-bottom:18px!important}
+ #merchantMode #psPcHome .ps-dcg-symbol{font-size:0!important;display:grid!important;place-items:center!important}
+ #merchantMode #psPcHome .ps-dcg-symbol svg{width:30px;height:30px;color:#0864c2}
+ #merchantMode #psPcHome .ps-pc-icon{font-size:0!important}
+ #merchantMode #psPcHome .ps-pc-icon svg{width:34px;height:34px}
+ #merchantMode #psPcHome .ps-pc-features .ps-pc-feature:nth-child(1) .ps-pc-icon{background:#e3f8ed!important;color:#138c56!important}
+ #merchantMode #psPcHome .ps-pc-features .ps-pc-feature:nth-child(2) .ps-pc-icon{background:#e5f2ff!important;color:#1768b6!important}
+ #merchantMode #psPcHome .ps-pc-features .ps-pc-feature:nth-child(3) .ps-pc-icon{background:#f0e7ff!important;color:#8051c7!important}
+ #merchantMode #psPcHome .ps-pc-features .ps-pc-feature:nth-child(4) .ps-pc-icon{background:#fff2d4!important;color:#a47717!important}
+}
+.rnf-choice-overlay{position:fixed;inset:0;z-index:2147482900;background:#0c1e3d91;display:grid;place-items:center;padding:20px}
+.rnf-choice-dialog{background:#fff;border-radius:20px;padding:22px;max-width:520px;width:100%;box-shadow:0 20px 60px #092f6350;color:#103c77}
+.rnf-choice-dialog h3{font-size:21px;margin:0 0 8px}.rnf-choice-dialog p{font-size:14px;color:#7185a2;margin:0 0 12px}
+.rnf-choice-dialog .rnf-choice-list{max-height:340px;overflow:auto;display:grid;gap:9px}
+.rnf-choice-dialog .rnf-choice-list button{width:100%;padding:13px 15px;text-align:left;border:1px solid #d8e6f8;border-radius:12px;background:#f3f8ff;color:#0d4384;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.rnf-choice-dialog .rnf-choice-close{margin-top:15px;border:0;border-radius:10px;padding:10px 20px;background:#e7f0fc;color:#144b8c;cursor:pointer}
+</style>
+<script id="rnf-desktop-final-cards-icons-script">
+(function(){'use strict';
+const icon={star:'<path d="m12 2 2.9 6 6.6 1-4.8 4.7 1.1 6.6L12 17.2l-5.8 3.1 1.1-6.6L2.5 9l6.6-1z"/>',news:'<path d="M4 3h16v18H4zM8 8h8M8 12h8M8 16h5"/>',people:'<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M17 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 6"/>',review:'<path d="M4 4h16v13H9l-5 4zM8 9h8M8 13h5"/>',scan:'<path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M7 12h10"/>'};
+const svg=x=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon[x]+'</svg>';
+function adjust(){if(innerWidth<960)return;const home=document.getElementById('psPcHome');if(!home)return;
+ const features=home.querySelector('.ps-pc-features'),panel=document.getElementById('psDesktopCodeGestion'),bottom=home.querySelector('.ps-pc-bottom');
+ if(features&&panel&&features.nextElementSibling!==panel)home.insertBefore(features,panel);
+ if(bottom&&panel&&panel.nextElementSibling!==bottom)home.insertBefore(bottom,panel.nextSibling);
+ const items=features?.querySelectorAll('.ps-pc-feature')||[];
+ const defs=[['Fidélité','Points et récompenses','star'],['Actus','Actualités du garage','news'],['Parrainage client','Suivre les parrainages','people'],['Avis Google','Consulter les avis','review']];
+ items.forEach((item,i)=>{if(i>3)return;const [name,sub,ico]=defs[i];const image=item.querySelector('.ps-pc-icon'),b=item.querySelector('b'),sm=item.querySelector('small');if(image&&image.dataset.rnfIcon!==ico){image.innerHTML=svg(ico);image.dataset.rnfIcon=ico}if(b)b.textContent=name;if(sm)sm.textContent=sub;});
+ const symbol=panel?.querySelector('.ps-dcg-symbol');if(symbol&&!symbol.dataset.rnfIcon){symbol.innerHTML=svg('scan');symbol.dataset.rnfIcon='1'}
+}
+window.rnfShowClientChoices=function(choices,choose){document.querySelector('.rnf-choice-overlay')?.remove();const overlay=document.createElement('div');overlay.className='rnf-choice-overlay';const dialog=document.createElement('section');dialog.className='rnf-choice-dialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.innerHTML='<h3>Choisir le client</h3><p>Plusieurs clients correspondent à votre recherche.</p><div class="rnf-choice-list"></div><button type="button" class="rnf-choice-close">Annuler</button>';overlay.append(dialog);document.body.append(overlay);const list=dialog.querySelector('.rnf-choice-list');choices.forEach(c=>{const b=document.createElement('button');b.type='button';const name=document.createElement('strong');name.textContent=c.nom||'Client';const code=document.createElement('span');code.textContent='Code : '+c.code;b.append(name,code);b.addEventListener('click',()=>{overlay.remove();choose(c.code)});list.append(b)});dialog.querySelector('.rnf-choice-close').onclick=()=>overlay.remove();overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()})};
+const obs=new MutationObserver(adjust);obs.observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',adjust);else adjust();
 })();
 </script>
 </body></html>
