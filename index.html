@@ -645,7 +645,7 @@ html body:not(.ps-client-authorized) main.app{visibility:hidden!important;pointe
 /* Un seul en-tête interactif. Position liée à la maquette, pas à l'écran Safari. */
 #clientHeaderClean {
   position:absolute!important;
-  top:8.6%!important;
+  top:4.0%!important;
   left:0!important;
   right:0!important;
   height:4.2%!important;
@@ -6390,19 +6390,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 <script id="ps-rebuilt-card-attach-20261107">
 (function(){function attach(){var card=document.getElementById('psRebuiltCard');var points=document.getElementById('psLiveCardOverlay');if(card&&points&&points.parentElement!==card)card.appendChild(points);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach);else attach();})();
-</script><script id="ps-client-identity-and-profile-20261108">
+</script><style id="ps-client-profile-dialog-fix-20261108">
+/* V6.1 : fenêtre profil client isolée du flux de la page, sans toucher à la fidélité. */
+.ps-profile-mask{position:fixed!important;inset:0!important;z-index:1000008!important;display:flex!important;align-items:flex-end;justify-content:center;background:rgba(8,29,61,.58);padding:0;overflow:hidden;font-family:Arial,Helvetica,sans-serif;box-sizing:border-box}
+.ps-profile-mask *{box-sizing:border-box}
+.ps-profile-card{position:relative;width:min(100%,540px);max-height:calc(100dvh - env(safe-area-inset-top) - 18px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;border-radius:26px 26px 0 0;padding:28px 22px calc(30px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px #102e5033;color:#104984}
+.ps-profile-card h2{font-size:clamp(22px,5vw,27px);line-height:1.2;margin:3px 48px 22px 0;font-weight:800}
+.ps-profile-close{position:absolute;top:19px;right:18px;width:38px;height:38px;border:0;border-radius:50%;background:#eef4fb;color:#104984;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.ps-profile-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid #e7edf5;padding:12px 0;min-width:0}
+.ps-profile-row small{font-size:13px;color:#667b91;flex:0 0 37%}
+.ps-profile-row strong{font-size:15px;line-height:1.4;color:#104984;text-align:right;overflow-wrap:anywhere;min-width:0}
+.ps-profile-qr{margin:23px auto 0;text-align:center;background:#f4f8fe;border-radius:20px;padding:20px 12px}
+.ps-profile-qr>strong{display:block;font-size:18px;margin-bottom:13px}
+#psMyProfileQr{display:flex;justify-content:center;align-items:center;min-height:180px;margin:0 auto;max-width:100%;overflow:hidden}
+#psMyProfileQr img,#psMyProfileQr canvas{max-width:100%;height:auto!important;display:block}
+.ps-profile-note{color:#64768b;font-size:12px;line-height:1.5;margin:14px auto 0;max-width:340px}
+@media(min-width:700px){.ps-profile-mask{align-items:center;padding:24px}.ps-profile-card{border-radius:26px;max-height:min(85dvh,760px);padding-bottom:30px}}
+</style>
+<style id="ps-client-profile-scroll-fix">html.ps-profile-open,html.ps-profile-open body{overflow:hidden!important}</style>
+<script id="ps-client-identity-and-profile-20261108">
 (function(){'use strict';
  const BASE='https://lsffbioatihkjtiutgma.supabase.co';
  const KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
  let profile=null,request=0,authorized=false;
  const safe=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function name(){document.querySelectorAll('#psActualFirstName,#psPanelFirstName').forEach(n=>n.textContent=profile?.prenom||'Mon compte');}
- function close(){document.getElementById('psMyProfileDialog')?.remove();}
+ function close(){document.getElementById('psMyProfileDialog')?.remove();document.documentElement.classList.remove('ps-profile-open');}
  window.psOpenMyProfile=function(){if(!authorized||!profile)return;close();const p=profile;
  const root=document.createElement('div');root.className='ps-profile-mask';root.id='psMyProfileDialog';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Ma fiche personnelle');
  const row=(label,val)=>'<div class="ps-profile-row"><small>'+safe(label)+'</small><strong>'+safe(val||'Non renseigné')+'</strong></div>';
  root.innerHTML='<section class="ps-profile-card"><button class="ps-profile-close" type="button" aria-label="Fermer">×</button><h2>Ma fiche personnelle</h2>'+row('Prénom',p.prenom)+row('Nom',p.nom)+row('Adresse e-mail',p.email)+row('Téléphone',p.telephone)+row('Code client',p.code_client)+'<div class="ps-profile-qr"><strong>Mon QR code client</strong><div id="psMyProfileQr"></div><p class="ps-profile-note">À présenter au garage. Ce code identifie votre carte de fidélité ; ce n’est pas un code de connexion.</p></div></section>';
- root.querySelector('.ps-profile-close').onclick=close;root.addEventListener('click',e=>{if(e.target===root)close()});document.body.appendChild(root);
+ root.querySelector('.ps-profile-close').onclick=close;root.addEventListener('click',e=>{if(e.target===root)close()});document.body.appendChild(root);document.documentElement.classList.add('ps-profile-open');root.querySelector('.ps-profile-close').focus();
  const qr=document.getElementById('psMyProfileQr');if(p.code_client&&typeof window.QRCode==='function'){new window.QRCode(qr,{text:String(p.code_client),width:180,height:180,correctLevel:window.QRCode.CorrectLevel.M})}else{qr.textContent=p.code_client?'Code client : '+p.code_client:'QR code indisponible'};
  };
  window.addEventListener('ps-auth-session',async e=>{const current=++request;close();profile=null;authorized=false;name();const token=e.detail?.token;if(!token||e.detail?.merchant)return;
