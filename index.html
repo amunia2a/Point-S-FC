@@ -6662,16 +6662,30 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-<!-- V6.12 : animation de retournement de la carte, sans changement de disposition ni de points. -->
-<style id="ps-v612-flip">
-#psRebuiltCard{cursor:pointer!important;transform-style:preserve-3d!important;transition:transform .68s cubic-bezier(.2,.7,.2,1)!important;will-change:transform;}
-#psRebuiltCard.ps-flipped{transform:rotateY(180deg)!important;}
-#psRebuiltCard .ps-card-brand,#psRebuiltCard #psLiveCardOverlay{backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:opacity .1s linear .3s!important;}
-#psRebuiltCard.ps-flipped .ps-card-brand,#psRebuiltCard.ps-flipped #psLiveCardOverlay{opacity:0!important;}
-#psFlipBack{position:absolute;inset:0;z-index:5;border-radius:inherit;background:#09549a;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;pointer-events:none;overflow:hidden;}
+<!-- V6.13 : correction du clic de la carte : la couche originale ignorait les événements. -->
+<style id="ps-v613-flip">
+#psRebuiltCard{pointer-events:auto!important;cursor:pointer!important;touch-action:manipulation!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important;transition:transform .65s cubic-bezier(.2,.7,.2,1)!important;-webkit-transition:-webkit-transform .65s cubic-bezier(.2,.7,.2,1)!important;}
+#psRebuiltCard.ps-flipped{transform:rotateY(180deg)!important;-webkit-transform:rotateY(180deg)!important;}
+#psRebuiltCard .ps-card-brand,#psRebuiltCard #psLiveCardOverlay{backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;pointer-events:none!important;}
+#psRebuiltCard.ps-flipped .ps-card-brand,#psRebuiltCard.ps-flipped #psLiveCardOverlay{visibility:hidden!important;}
+#psFlipBack{position:absolute;inset:0;z-index:5;border-radius:inherit;background:#07529b;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;transform:rotateY(180deg);-webkit-transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;pointer-events:none;visibility:hidden;overflow:hidden;}
+#psRebuiltCard.ps-flipped #psFlipBack{visibility:visible!important;}
 #psFlipBack::after{content:"";position:absolute;inset:12px;border:1px solid #ffffff42;border-radius:15px;pointer-events:none;}
-.ps-flip-back-title{font-weight:900;font-size:clamp(28px,7vw,48px);font-style:italic;letter-spacing:-1px}.ps-flip-back-sub{font-size:clamp(12px,3vw,18px);font-weight:800;letter-spacing:.12em}.ps-flip-back-message{font-size:clamp(16px,4vw,26px);font-style:italic;margin-top:14px}.ps-flip-back-hint{font-size:clamp(10px,2.5vw,14px);opacity:.75;margin-top:18px}
-@media(prefers-reduced-motion:reduce){#psRebuiltCard{transition:none!important}}
+.ps-flip-back-title{font-weight:900;font-size:clamp(28px,7vw,48px);font-style:italic;letter-spacing:-1px}
+.ps-flip-back-sub{font-size:clamp(12px,3vw,18px);font-weight:800;letter-spacing:.12em}
+.ps-flip-back-message{font-size:clamp(16px,4vw,26px);font-style:italic;margin-top:14px}
+.ps-flip-back-hint{font-size:clamp(10px,2.5vw,14px);opacity:.75;margin-top:18px}
+@media(prefers-reduced-motion:reduce){#psRebuiltCard{transition:none!important;-webkit-transition:none!important}}
 </style>
-<script id="ps-v612-flip-script">(function(){function init(){var card=document.getElementById('psRebuiltCard');if(!card||card.dataset.flipBound)return;card.dataset.flipBound='1';card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Retourner ma carte de fidélité');card.setAttribute('aria-pressed','false');function toggle(){var flipped=card.classList.toggle('ps-flipped');card.setAttribute('aria-pressed',String(flipped));}card.addEventListener('click',function(e){if(e.target.closest('button,a,input,select'))return;toggle()});card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();</script>
+<script id="ps-v613-flip-script">(function(){
+ function init(){
+  var card=document.getElementById('psRebuiltCard');if(!card||card.dataset.flipBound)return;
+  card.dataset.flipBound='v613';card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Retourner ma carte de fidélité');card.setAttribute('aria-pressed','false');
+  function toggle(){var flipped=card.classList.toggle('ps-flipped');card.setAttribute('aria-pressed',String(flipped));}
+  // Capture : empêche les anciens gestionnaires de clic de naviguer vers Mes points fidélité.
+  card.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();toggle();},true);
+  card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopImmediatePropagation();toggle();}},true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();</script>
 </body></html>
