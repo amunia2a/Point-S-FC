@@ -6701,4 +6701,57 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <div id="mcMerchantProfile" hidden role="dialog" aria-modal="true" aria-label="Profil commerçant"><div class="profile-sheet"><button type="button" onclick="document.getElementById('mcMerchantProfile').hidden=true" style="float:right">Fermer</button><h2>Mon profil commerçant</h2><p style="font-size:13px;color:#60758b">Les informations du compte sont consultables ici. L'enregistrement sécurisé des modifications nécessite le raccordement à la table Supabase des commerçants.</p><img class="profile-photo" id="mcMerchantProfilePhoto" alt="Photo de profil" hidden><label>Prénom<input id="mcMerchantProfileFirst" readonly placeholder="À récupérer depuis le compte connecté"></label><label>Nom<input id="mcMerchantProfileLast" readonly placeholder="À récupérer depuis le compte connecté"></label><label>Adresse e-mail<input id="mcMerchantProfileEmail" readonly placeholder="À récupérer depuis le compte connecté"></label><p style="font-size:12px;color:#64758a">Photo et modification des informations : non activées tant que le stockage et les autorisations Supabase ne sont pas vérifiés.</p></div></div>
 <script id="v614-merchant-profile">
 (function(){function init(){var h=document.querySelector('#merchantMode .mc-client-header');if(!h)return;for(var el of [h.querySelector('.mc-avatar'),h.querySelector('.mc-greeting')]){if(!el)continue;el.setAttribute('role','button');el.setAttribute('tabindex','0');el.setAttribute('aria-label','Ouvrir mon profil commerçant');el.addEventListener('click',function(){document.getElementById('mcMerchantProfile').hidden=false});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById('mcMerchantProfile').hidden=false}})}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()})();
-</script></body></html>
+</script>
+<!-- V6.15 : correctifs demandés, affichage uniquement. Aucun changement Supabase/RLS. -->
+<style id="ps-v615-desktop-fix">
+@media(min-width:960px){
+ #merchantMode .mc-swipe-menu{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;width:100%!important;max-width:none!important;gap:12px!important;overflow:visible!important;box-sizing:border-box!important}
+ #merchantMode .mc-swipe-menu button{min-width:0!important;width:100%!important;justify-content:center!important;flex:1 1 auto!important;padding:13px 8px!important;font-size:clamp(12px,1vw,15px)!important;white-space:nowrap!important}
+ #merchantMode #psPcHome .ps-pc-bottom{display:none!important}
+ #merchantMode #psPcHome .ps-pc-grid,#merchantMode #psPcHome .ps-pc-actions{display:none!important}
+ #merchantMode #mc-dashboard .mc-overview,#merchantMode #mc-dashboard .mc-section,#merchantMode #mc-dashboard .mc-actions,#merchantMode #mc-dashboard .mc-activity,#merchantMode #mc-dashboard .mc-kpi-strip,#merchantMode #mc-dashboard .mc-more-links{display:none!important}
+}
+</style>
+<script id="ps-v615-dashboard-profile-fix">
+(function(){'use strict';
+ let currentName='';
+ function updateGreeting(){
+  const root=document.getElementById('merchantMode');if(!root)return;
+  const targets=root.querySelectorAll('.mc-client-header .mc-greeting strong,.mc-client-header .ch-copy strong,.mc-client-header .rnf-hello strong,.mc-client-header .rnf-identity strong');
+  targets.forEach(n=>{if(currentName)n.textContent=currentName;else if(/^(Virginie|Mon compte)$/i.test(n.textContent.trim()))n.textContent='Mon profil';});
+  const header=root.querySelector('.mc-client-header');
+  const profile=header?.querySelector('.ch-profile,.rnf-identity,.mc-avatar,.mc-greeting');
+  if(profile&&!profile.dataset.psProfileClick){profile.dataset.psProfileClick='1';profile.style.cursor='pointer';profile.addEventListener('click',()=>{const dlg=document.getElementById('mcMerchantProfile');if(dlg)dlg.hidden=false;});}
+ }
+ function hideAfterSearch(){
+  if(innerWidth<960)return;
+  const dash=document.querySelector('#merchantMode #mc-dashboard');if(!dash)return;
+  const home=dash.querySelector('#psPcHome');if(home){
+   const bottom=home.querySelector('.ps-pc-bottom');if(bottom)bottom.remove();
+   const panel=home.querySelector('#psDesktopCodeGestion');
+   if(panel){let n=panel.nextElementSibling;while(n){const next=n.nextElementSibling;if(n.classList.contains('ps-pc-bottom'))n.remove();n=next;}}
+  }
+  // Masquer seulement les modules de l'accueil placés sous le moteur de recherche.
+  const search=dash.querySelector('#psDesktopCodeGestion');
+  if(search){let node=search;while(node&&node.parentElement!==dash)node=node.parentElement;
+   if(node){let sib=node.nextElementSibling;while(sib){if(!sib.classList.contains('mc-swipe-menu'))sib.style.setProperty('display','none','important');sib=sib.nextElementSibling;}}}
+ }
+ async function readMerchantName(token){
+  if(!token){currentName='';updateGreeting();return;}
+  try{
+   const source=document.querySelector('script[src*="supabase"]');
+   const base=(document.documentElement.innerHTML.match(/https:\/\/[a-z0-9-]+\.supabase\.co/)||[])[0];
+   if(!base)return;
+   const r=await fetch(base+'/auth/v1/user',{headers:{Authorization:'Bearer '+token}});
+   if(!r.ok)return;const u=await r.json();const m=u.user_metadata||{};
+   const first=[m.prenom,m.first_name,m.given_name].find(x=>typeof x==='string'&&x.trim());
+   currentName=first?first.trim():'';updateGreeting();
+  }catch(e){console.warn('Prénom commerçant indisponible',e.message);}
+ }
+ window.addEventListener('ps-auth-session',e=>{if(e.detail?.merchant)readMerchantName(e.detail.token);else{currentName='';updateGreeting();}});
+ function init(){updateGreeting();hideAfterSearch();const root=document.getElementById('merchantMode');if(root){let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;updateGreeting();});}).observe(root,{childList:true,subtree:true});}}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+ window.addEventListener('resize',hideAfterSearch);
+})();
+</script>
+</body></html>
