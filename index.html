@@ -6871,4 +6871,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch,{once:true});else watch();
 })();
 </script>
+
+<style id="ps-v632-nav-fix">
+/* V6.32 — uniquement commerçant PC, écriture et icônes bleues. */
+@media screen and (min-width:960px){
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > .rnf-nav-toggle,
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu .rnf-nav-toggle{display:none!important;visibility:hidden!important;width:0!important;height:0!important;margin:0!important;padding:0!important;}
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > button:not(.rnf-nav-toggle),
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > button:not(.rnf-nav-toggle) *,
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > button:not(.rnf-nav-toggle) svg,
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > button:not(.rnf-nav-toggle) svg *{
+   color:#073b94!important;stroke:currentColor!important;
+ }
+ body #merchantMode .mc-wrap > nav.mc-swipe-menu > button:not(.rnf-nav-toggle){-webkit-text-fill-color:#073b94!important;}
+}
+</style>
+<script id="ps-v632-remove-toggle">
+(function(){
+ const desktop=window.matchMedia('(min-width:960px)');
+ function cleanup(){
+  if(!desktop.matches)return;
+  const nav=document.querySelector('#merchantMode .mc-wrap > nav.mc-swipe-menu');
+  if(!nav)return;
+  nav.querySelectorAll('.rnf-nav-toggle').forEach(function(button){button.remove();});
+ }
+ function init(){
+  cleanup();
+  const mode=document.getElementById('merchantMode');
+  if(!mode)return;
+  new MutationObserver(cleanup).observe(mode,{childList:true,subtree:true});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
 </body></html>
