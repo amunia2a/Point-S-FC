@@ -7665,9 +7665,29 @@ window.addEventListener('ps-rpc-updated',()=>{cache=null;updateStats()});window.
 window.addEventListener('rnf-v651-visit-updated',()=>{cache=null;updateStats()});
 document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'){setTimeout(()=>{refresh();updateStats()},120)}});
 document.addEventListener('click',e=>{if(e.target.closest?.('.ps642-option,.ps642-settings-trigger,.ps-v635-save'))setTimeout(()=>{fixGarage();updateStats()},170);if(e.target.closest?.('#psDcgIdentity,#mclList .mcl-card,.rnf-v645-full'))setTimeout(refresh,400);if(e.target.closest?.('[data-v="stats"]'))setTimeout(updateStats,450)});
-const observer=new MutationObserver(()=>{if(!desktop())return;fixIcon();addPreview();addFull();fixGarage()});
+// V6.54: the legacy navigation may render the old statistics view after the
+// first navigation. Observe the actual view contents and replace that render.
+let rnfV654RepairTimer=null;
+const observer=new MutationObserver(()=>{
+ if(!desktop())return;
+ fixIcon();addPreview();addFull();fixGarage();
+ const root=$('mc-stats');
+ if(!root||!token)return;
+ const visible=root.classList.contains('active')||root.offsetParent!==null;
+ if(!visible||root.querySelector('.rnf-v653-stats'))return;
+ clearTimeout(rnfV654RepairTimer);
+ rnfV654RepairTimer=setTimeout(()=>{
+  const current=$('mc-stats');
+  if(current&&(current.classList.contains('active')||current.offsetParent!==null)&&!current.querySelector('.rnf-v653-stats'))updateStats();
+ },40);
+});
 function start(){if(!desktop())return;observer.observe(document.body,{childList:true,subtree:true});refresh();setTimeout(updateStats,1400)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
+<style id="rnf-v654-stats-single-render">
+@media(min-width:960px){
+ #merchantMode #mc-stats > :not(.rnf-v651-stats){display:none!important}
+}
+</style>
 </body></html>
