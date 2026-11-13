@@ -8042,10 +8042,19 @@ body.ps-client-authorized #clientHeaderClean .ch-garage span,body.ps-client-auth
  opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='ps671-option';b.setAttribute('role','radio');b.setAttribute('aria-checked',String(o.value===pending));const label=(o.textContent||o.value).trim();b.innerHTML=pinSvg+'<span></span><span class="ps671-check"></span>';b.querySelector('span').textContent=/point s/i.test(label)?label:'Point S '+label;b.addEventListener('click',()=>{pending=o.value;box.querySelectorAll('.ps671-option').forEach((x,i)=>{const checked=opts[i].value===pending;x.setAttribute('aria-checked',String(checked));x.querySelector('.ps671-check').textContent=checked?'✓':''})});box.appendChild(b)});
  box.querySelectorAll('.ps671-option').forEach((b,i)=>b.querySelector('.ps671-check').textContent=opts[i].value===pending?'✓':'');m.querySelector('.ps671-confirm').disabled=!opts.length;m.hidden=false;
  }
- function init(){if(!mobile.matches)return;const shell=document.querySelector('#merchantMode .mc-client-header .mc-garage-clean');if(!shell||shell.querySelector('.ps671-pin'))return;const btn=document.createElement('button');btn.type='button';btn.className='ps671-pin';btn.setAttribute('aria-label','Sélectionner un garage');btn.innerHTML=pinSvg;btn.addEventListener('click',open);shell.appendChild(btn)}
+ function init(){if(!mobile.matches)return;const header=document.querySelector('#merchantMode .mc-client-header');if(!header||header.querySelector('.ps671-pin'))return;const btn=document.createElement('button');btn.type='button';btn.className='ps671-pin';btn.setAttribute('aria-label','Sélectionner un garage');btn.innerHTML=pinSvg;btn.addEventListener('click',open);header.appendChild(btn)}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',init);
- const root=document.getElementById('merchantMode');if(root)new MutationObserver(()=>{if(mobile.matches)init()}).observe(root,{childList:true,subtree:false});
+ const root=document.querySelector('#merchantMode .mc-client-header');if(root)new MutationObserver(()=>{if(mobile.matches)init()}).observe(root,{childList:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
 })();
 </script>
+<style id="ps-v672-merchant-pin-fix">
+/* V6.72 : le header réel utilise #mcGarage directement, sans .mc-garage-clean. */
+@media(max-width:767px){
+ #merchantMode .mc-client-header{position:relative!important}
+ #merchantMode .mc-client-header #mcGarage{display:none!important}
+ #merchantMode .mc-client-header .ps671-pin{display:grid!important;position:relative!important;z-index:10!important;flex:0 0 46px!important;align-items:center!important;justify-content:center!important;width:46px!important;height:46px!important;margin-left:auto!important;border:0!important;border-radius:50%!important;background:#eaf3ff!important;color:#14549b!important;padding:11px!important;cursor:pointer!important;visibility:visible!important;opacity:1!important}
+ #merchantMode .mc-client-header .ps671-pin svg{display:block!important;width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:1.9!important}
+}
+</style>
 </body></html>
