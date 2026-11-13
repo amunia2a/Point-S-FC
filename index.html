@@ -7520,7 +7520,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #rnfV645Preview .rnf-v651-visit{width:100%;margin:12px 0 9px;background:#073b94;color:white;border:0;border-radius:13px;padding:14px 16px;font-weight:800;cursor:pointer}
 #rnfV645Preview .rnf-v651-visit:disabled,.rnf-v651-visit:disabled{background:#e4f7ed!important;color:#13834c!important;cursor:default!important}
 #merchantMode #mc-clientdetail .rnf-v651-fullvisit{display:block;margin:12px 0;padding:12px 18px;background:#073b94;color:#fff;border:0;border-radius:12px;font-weight:800;cursor:pointer}
-#merchantMode .rnf-v651-clients-icon img{height:100%;width:100%;max-width:45px;max-height:45px;object-fit:contain}
+#merchantMode .rnf-v651-clients-icon img{height:100%;width:100%;max-width:31px;max-height:31px;object-fit:contain}
 .rnf-v651-stats{font-family:ui-rounded,system-ui,sans-serif;color:#073b94}
 .rnf-v651-stats .rnf-v651-periods{display:flex;gap:8px;margin:12px 0 18px;flex-wrap:wrap}
 .rnf-v651-stats .rnf-v651-periods button{border:1px solid #d4e3f7;background:#fff;border-radius:12px;padding:10px 17px;font-weight:800;color:#073b94;cursor:pointer}
@@ -7544,6 +7544,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 </style>
 
+<style id="rnf-v652-visual-only">
+/* V6.52 – Retouche visuelle PC uniquement, données et logique V6.51 conservées */
+@media (min-width:960px){
+#merchantMode .rnf-v651-clients-icon img{width:31px!important;height:31px!important;max-width:31px!important;max-height:31px!important;object-fit:contain!important}
+#merchantMode .rnf-v651-stats{max-width:100%;font-family:inherit;color:#073b94}
+#merchantMode .rnf-v651-stats>h2{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
+#merchantMode .rnf-v651-stats>p{font-size:12px;color:#6881a8;margin:0 0 16px}
+#merchantMode .rnf-v651-periods{gap:9px;margin:15px 0 20px}
+#merchantMode .rnf-v651-periods button{border-radius:11px;padding:10px 18px;font-size:12px;box-shadow:none}
+#merchantMode .rnf-v651-kpis{gap:15px;align-items:stretch}
+#merchantMode .rnf-v651-kpi{border-radius:20px;min-height:154px;padding:18px 19px;background:#fff;box-shadow:0 7px 22px rgba(25,73,134,.045);display:flex;flex-direction:column;justify-content:space-between}
+#merchantMode .rnf-v651-kpi .heading{display:flex;align-items:center;gap:11px;font-size:13px;line-height:1.35;font-weight:750;min-height:49px}
+#merchantMode .rnf-v651-kpi .rnf-v651-kpi-icon{width:45px;height:45px;min-width:45px;border-radius:14px;background:#efe8ff;color:#8050c7;display:grid;place-items:center;font-size:22px;line-height:1}
+#merchantMode .rnf-v651-kpi:nth-child(2) .rnf-v651-kpi-icon{background:#e5f7ed;color:#16865c}
+#merchantMode .rnf-v651-kpi:nth-child(3) .rnf-v651-kpi-icon{background:#e7f1ff;color:#1767c6}
+#merchantMode .rnf-v651-kpi:nth-child(4) .rnf-v651-kpi-icon{background:#fff1d7;color:#b57b16}
+#merchantMode .rnf-v651-kpi strong{font-size:30px;font-weight:800;letter-spacing:-.7px;margin:10px 0 0}
+#merchantMode .rnf-v651-chart{border-radius:20px;padding:20px 22px 15px;box-shadow:0 7px 22px rgba(25,73,134,.045);margin-top:15px}
+#merchantMode .rnf-v651-chart h3{font-size:16px;font-weight:800;margin:0 0 13px}
+#merchantMode .rnf-v651-bars{height:180px;gap:6px;padding:12px 0 0;border-bottom:1px solid #e5edf8}
+#merchantMode .rnf-v651-bar{min-width:15px;gap:5px}
+#merchantMode .rnf-v651-bar i{background:linear-gradient(180deg,#5794ec,#2d6fca);border-radius:6px 6px 0 0;width:min(70%,55px);transition:height .2s ease}
+#merchantMode .rnf-v651-bar small{font-size:10px;color:#7188a6}
+#merchantMode .rnf-v651-bar em{font-size:11px;color:#073b94;font-weight:750}
+}
+</style>
 <script id="rnf-v651-desktop-behavior">
 (function(){'use strict';
 const desktop=()=>window.matchMedia('(min-width:960px)').matches;
@@ -7571,8 +7597,8 @@ function fixIcon(){if(!desktop())return;const home=$('psPcHome');if(!home)return
 function dates(n){const out=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);out.push(day(d))}return out}
 function countPerDay(rows,ds,fn){const m=new Map(ds.map(d=>[d,0]));for(const r of rows){const k=day(r.created_at||r.date_visite);if(m.has(k))m.set(k,m.get(k)+fn(r))}return ds.map(d=>m.get(d))}
 function bars(values,ds){const max=Math.max(1,...values);return '<div class="rnf-v651-bars">'+values.map((v,i)=>'<div class="rnf-v651-bar" title="'+safe(ds[i])+' : '+num(v)+'"><em>'+num(v)+'</em><i style="height:'+Math.max(2,Math.round(v/max*140))+'px"></i><small>'+safe(ds[i].slice(5))+'</small></div>').join('')+'</div>'}
-function kpi(name,value,icon){return '<div class="rnf-v651-kpi"><div class="heading"><span>'+icon+'</span><span>'+safe(name)+'</span></div><strong>'+safe(value)+'</strong></div>'}
-const icons={clients:'👤',visits:'🚗',points:'✦',rewards:'🎁'};
+function kpi(name,value,icon){return '<div class="rnf-v651-kpi"><div class="heading"><span class="rnf-v651-kpi-icon">'+icon+'</span><span>'+safe(name)+'</span></div><strong>'+safe(value)+'</strong></div>'}
+const icons={clients:'♙',visits:'🚘',points:'✦',rewards:'♢'};
 async function loadData(){const ds=dates(currentPeriod);const start=ds[0];const [clients,accounts,visits]=await Promise.all([all('clients','id,created_at'),all('comptes_fidelite','id,garage_id'),all('visites_fidelite','client_id,date_visite,garage_id','date_visite=gte.'+start)]);const allowedIds=new Set(await getGarageIds());const accountIds=new Set(accounts.filter(x=>allowedIds.has(x.garage_id)).map(x=>x.id));const ops=await all('operations_fidelite','id,compte_id,type_operation,variation_points,created_at','created_at=gte.'+encodeURIComponent(start+'T00:00:00Z'));const filtered=ops.filter(o=>accountIds.has(o.compte_id));const pointOps=filtered.filter(o=>o.type_operation==='ajout'&&Number(o.variation_points)>0);const rewards=filtered.filter(o=>o.type_operation==='recompense');const visitRows=visits.filter(v=>allowedIds.has(v.garage_id));const uniqueVisits=visits.filter(v=>v.date_visite>=start);return {ds,clients,pointOps,rewards,visitRows,uniqueVisits,accounts};}
 async function updateStats(){if(!desktop()||!token)return;const root=$('mc-stats');if(!root)return;const existing=root.querySelector('.rnf-v651-stats');if(!existing&&!root.classList.contains('active')&&root.offsetParent===null)return;let host=existing;if(!host){root.replaceChildren();host=document.createElement('div');host.className='rnf-v651-stats';root.append(host)}host.innerHTML='<h2>Consommation et statistiques</h2><p>Indicateurs calculés depuis Supabase · garage sélectionné : '+safe(garage())+'</p><p>Chargement des données…</p>';
 try{const d=await loadData();cache=d;const visits=d.visitRows;const visitCounts=d.ds.map(x=>visits.filter(v=>v.date_visite===x).length);const pointCounts=countPerDay(d.pointOps,d.ds,r=>Number(r.variation_points)||0);const newClients=d.clients.filter(c=>c.created_at&&day(c.created_at)>=d.ds[0]);const newCounts=countPerDay(newClients,d.ds,()=>1);const rewardsCounts=countPerDay(d.rewards,d.ds,()=>1);const last=d.ds[d.ds.length-1];const totalPoints=d.pointOps.reduce((sum,r)=>sum+Number(r.variation_points||0),0);const allVisitsToday=d.uniqueVisits.filter(v=>v.date_visite===last).length;
