@@ -7171,4 +7171,58 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
 })();
 </script>
+<style id="ps-v642-desktop-corrections">
+@media(min-width:960px){
+#merchantMode .mc-wrap>.mc-top.mc-client-header{display:none!important}
+#merchantMode .ps642-header{display:flex!important;align-items:center;justify-content:space-between;gap:25px;padding:24px 30px;min-height:132px;margin:0 0 24px;background:#f3f8ff;border:1px solid #e0ebfa;border-radius:24px;box-shadow:0 5px 18px rgba(17,61,126,.035);font-family:Arial,sans-serif}
+#merchantMode .ps642-person{display:flex;align-items:center;gap:18px;min-width:0}
+#merchantMode .ps642-avatar{width:78px;height:78px;flex:0 0 78px;border-radius:50%;background:#e1edff;color:#073b94;border:0;display:grid;place-items:center;position:relative;overflow:hidden;cursor:pointer}
+#merchantMode .ps642-avatar svg{width:36px;height:36px}
+#merchantMode .ps642-avatar img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+#merchantMode .ps642-avatar:after{content:'✎';position:absolute;bottom:0;right:0;width:25px;height:25px;border:2px solid #f3f8ff;border-radius:50%;background:#073b94;color:#fff;font-size:13px;display:grid;place-items:center}
+#merchantMode .ps642-hello{display:flex;flex-direction:column;gap:5px}
+#merchantMode .ps642-hello small{font-size:14px;color:#7187a8}
+#merchantMode .ps642-hello strong{font-size:28px;color:#073b94;line-height:1.1}
+#merchantMode .ps642-hello span{font-size:12px;color:#7187a8}
+#merchantMode .ps642-garage-area{position:relative;min-width:245px}
+#merchantMode .ps642-garage-label{display:block;font-size:12px;color:#7187a8;margin:0 0 7px 13px}
+#merchantMode .ps642-garage-trigger{width:100%;border:1px solid #d9e6f8;background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:11px;color:#073b94;cursor:pointer;font-weight:700;font-size:15px;text-align:left}
+#merchantMode .ps642-garage-trigger svg{width:21px;height:21px;flex:0 0 21px}
+#merchantMode .ps642-garage-trigger span{flex:1}
+#merchantMode .ps642-menu,#psMerchantSettings .ps642-menu{position:absolute;z-index:100;top:calc(100% + 8px);left:0;right:0;background:#fff;border:1px solid #dce7f7;border-radius:16px;padding:7px;box-shadow:0 15px 35px rgba(14,52,109,.16)}
+#merchantMode .ps642-menu[hidden],#psMerchantSettings .ps642-menu[hidden]{display:none!important}
+#merchantMode .ps642-option,#psMerchantSettings .ps642-option{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-radius:11px;background:transparent;color:#073b94;padding:12px 14px;font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+#merchantMode .ps642-option:hover,#merchantMode .ps642-option[aria-selected="true"],#psMerchantSettings .ps642-option:hover,#psMerchantSettings .ps642-option[aria-selected="true"]{background:#eaf3ff}
+#psMerchantSettings .ps642-field{position:relative;margin-top:19px}
+#psMerchantSettings .ps642-field-label{font-size:13px;font-weight:700;color:#073b94;display:block;margin-bottom:8px}
+#psMerchantSettings .ps642-settings-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #cbdcf2;border-radius:13px;background:#fff;color:#073b94;font-size:15px;font-weight:600;cursor:pointer}
+#psMerchantSettings .ps642-settings-trigger svg{width:17px;height:17px}
+#psMerchantSettings .ps-v635-field:has(select){display:none!important}
+#psMerchantSettings .ps-settings-card{width:min(100%,530px);max-height:calc(100vh - 40px);overflow-y:auto;padding:29px;border-radius:25px}
+#psMerchantSettings .ps-v635-save{margin-top:24px}
+}
+</style>
+<script id="ps-v642-desktop-behavior">
+(function(){
+const mq=window.matchMedia('(min-width:960px)'),$=(q)=>document.querySelector(q);
+const original=()=>$('#merchantMode #mcGarage');
+const key='ps_merchant_display_name_v635';
+let photoUrl=null, selectedGarage=null;
+function label(o){return (o?.textContent||'').replace(/^\s*📍\s*/,'').trim()||'Garage sélectionné'}
+function allowed(){const s=original();return s?Array.from(s.options).filter(o=>!o.disabled&&!o.hidden&&o.value!==''):[]}
+function active(){return original()?.value||''}
+function updateGarage(value){const s=original();if(!s||!allowed().some(o=>o.value===value))return false;if(s.value!==value){s.value=value;s.dispatchEvent(new Event('change',{bubbles:true}));}refresh();return true}
+function buildMenu(menu,onPick,value){menu.replaceChildren();const opts=allowed();if(!opts.length){const t=document.createElement('div');t.textContent='Aucun garage disponible';t.style.padding='12px';menu.appendChild(t);return}opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='ps642-option';b.setAttribute('role','option');b.setAttribute('aria-selected',String(o.value===value));b.textContent=label(o);if(o.value===value)b.insertAdjacentText('beforeend','  ✓');b.addEventListener('click',()=>{onPick(o.value);menu.hidden=true});menu.appendChild(b)})}
+function currentName(){try{return localStorage.getItem(key)||''}catch(e){return ''}}
+function refresh(){if(!mq.matches)return;const h=$('#ps642Header');if(!h)return;const name=currentName()||$('#merchantMode .mc-client-header .mc-greeting strong')?.textContent?.trim()||'Mon compte';h.querySelector('.ps642-hello strong').textContent=name;const opt=allowed().find(o=>o.value===active());h.querySelector('.ps642-garage-trigger span').textContent=label(opt);const menu=h.querySelector('.ps642-menu');if(!menu.hidden)buildMenu(menu,updateGarage,active());const dialog=$('#psMerchantSettings');const btn=dialog?.querySelector('.ps642-settings-trigger');if(btn){const val=selectedGarage&&allowed().some(o=>o.value===selectedGarage)?selectedGarage:active();btn.querySelector('span').textContent=label(allowed().find(o=>o.value===val));}}
+function choose(){let inp=$('#psV641PhotoInput');if(inp)inp.click()}
+function paint(){const img=$('#ps642Header .ps642-avatar img');if(img){if(photoUrl){img.src=photoUrl;img.hidden=false}else img.hidden=true}}
+function makeHeader(){const wrap=$('#merchantMode .mc-wrap');if(!wrap||$('#ps642Header'))return;const h=document.createElement('div');h.id='ps642Header';h.className='ps642-header';h.innerHTML=`<div class="ps642-person"><button type="button" class="ps642-avatar" aria-label="Modifier la photo de profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-8 8-8s8 3.5 8 8"/></svg><img hidden alt="Photo de profil"></button><div class="ps642-hello"><small>Bonjour,</small><strong>Mon compte</strong><span>Compte commerçant</span></div></div><div class="ps642-garage-area"><small class="ps642-garage-label">Mon garage</small><button type="button" class="ps642-garage-trigger" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Garage sélectionné</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="ps642-menu" hidden role="listbox"></div></div>`;wrap.insertBefore(h,wrap.firstChild);h.querySelector('.ps642-avatar').addEventListener('click',choose);const btn=h.querySelector('.ps642-garage-trigger'),menu=h.querySelector('.ps642-menu');btn.addEventListener('click',()=>{menu.hidden=!menu.hidden;btn.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden)buildMenu(menu,updateGarage,active())});refresh()}
+function makeSettings(){const d=$('#psMerchantSettings');if(!d||d.querySelector('.ps642-field'))return;const old=d.querySelector('.ps-v635-field select');if(!old)return;const field=document.createElement('div');field.className='ps642-field';field.innerHTML=`<label class="ps642-field-label">Garage sélectionné</label><button type="button" class="ps642-settings-trigger" aria-expanded="false"><span>Choisir un garage</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button><div class="ps642-menu" role="listbox" hidden></div>`;old.closest('.ps-v635-field').after(field);const trigger=field.querySelector('button'),menu=field.querySelector('.ps642-menu');trigger.addEventListener('click',()=>{menu.hidden=!menu.hidden;trigger.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden)buildMenu(menu,v=>{selectedGarage=v;old.value=v;refresh()},selectedGarage||active())});const save=d.querySelector('.ps-v635-save');if(save)save.addEventListener('click',()=>{if(selectedGarage){old.value=selectedGarage;updateGarage(selectedGarage);selectedGarage=null;}},true);new MutationObserver(()=>{if(!d.hidden){selectedGarage=active();refresh()}}).observe(d,{attributes:true,attributeFilter:['hidden']});refresh()}
+function init(){if(!mq.matches)return;makeHeader();makeSettings();refresh();const file=$('#psV641PhotoInput');if(file&&!file.dataset.ps642){file.dataset.ps642='1';file.addEventListener('change',()=>{const f=file.files?.[0];if(!f||!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>3*1024*1024)return;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=URL.createObjectURL(f);paint()})}const s=original();if(s&&!s.dataset.ps642){s.dataset.ps642='1';s.addEventListener('change',refresh)}}
+document.addEventListener('click',e=>{if(!e.target.closest('.ps642-garage-area,.ps642-field'))document.querySelectorAll('.ps642-menu').forEach(m=>m.hidden=true)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ps642-menu').forEach(m=>m.hidden=true)});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',init);
+})();
+</script>
 </body></html>
