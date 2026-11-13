@@ -7225,4 +7225,56 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',init);
 })();
 </script>
+
+<!-- V6.43 : suppression du doublon de header sur ordinateur uniquement -->
+<style id="ps-v643-single-desktop-header">
+@media screen and (min-width:960px) {
+  html body #merchantMode .mc-wrap .mc-top.mc-client-header,
+  html body #merchantMode .mc-client-header:not(.ps642-header) {
+    display:none!important;
+    visibility:hidden!important;
+    height:0!important;
+    min-height:0!important;
+    max-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    overflow:hidden!important;
+  }
+  html body #merchantMode .mc-wrap > #ps642Header {
+    display:flex!important;
+    margin-bottom:16px!important;
+  }
+}
+</style>
+<script id="ps-v643-single-desktop-header-script">
+(function(){
+  'use strict';
+  const mq=window.matchMedia('(min-width:960px)');
+  function hideOld(){
+    if(!mq.matches)return;
+    const root=document.getElementById('merchantMode');
+    if(!root)return;
+    root.querySelectorAll('.mc-client-header').forEach(function(el){
+      if(el.id==='ps642Header'||el.classList.contains('ps642-header'))return;
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.setAttribute('aria-hidden','true');
+    });
+  }
+  function start(){
+    hideOld();
+    const root=document.getElementById('merchantMode');
+    if(!root)return;
+    const observer=new MutationObserver(function(records){
+      if(!mq.matches)return;
+      if(records.some(r=>r.type==='childList' && r.addedNodes.length))hideOld();
+    });
+    observer.observe(root,{childList:true,subtree:true});
+    window.addEventListener('load',hideOld);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  if(mq.addEventListener)mq.addEventListener('change',function(){if(mq.matches)hideOld()});
+})();
+</script>
 </body></html>
