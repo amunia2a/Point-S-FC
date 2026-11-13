@@ -7857,4 +7857,33 @@ window.addEventListener('focus',poll);document.addEventListener('visibilitychang
 @media(min-width:960px){#merchantMode #psPcHome .ps-pc-features{grid-template-columns:repeat(3,minmax(0,1fr))!important}#merchantMode #psPcHome .ps-rdv-home-card{display:flex!important;visibility:visible!important;opacity:1!important}}
 #merchantMode #psPcHome .ps-rdv-home-icon svg{display:block;width:27px;height:27px}
 </style>
+
+<!-- V6.63 : iOS Safari, verso visible sans dépendre du rendu 3D WebKit. -->
+<style id="rnf-v663-ios-verso-visibility">
+/* Le recto reste strictement inchangé ; seul l'état retourné utilise un rendu 2D fiable. */
+#psRebuiltCard.ps-flipped{transform:none!important;-webkit-transform:none!important;}
+#psRebuiltCard.ps-flipped #psFlipBack{
+  display:flex!important;visibility:visible!important;opacity:1!important;
+  transform:none!important;-webkit-transform:none!important;
+  backface-visibility:visible!important;-webkit-backface-visibility:visible!important;
+  z-index:100!important;position:absolute!important;inset:0!important;
+  color:#fff!important;background:#07529b!important;
+}
+#psRebuiltCard.ps-flipped #psFlipBack h3,
+#psRebuiltCard.ps-flipped #psFlipBack .ps-rdv-white,
+#psRebuiltCard.ps-flipped #psFlipBack .ps-rdv-empty{visibility:visible!important;opacity:1!important;}
+</style>
+<script id="rnf-v663-ios-verso-refresh">
+(function(){'use strict';
+  function refresh(){
+    const card=document.getElementById('psRebuiltCard');
+    const back=document.getElementById('psFlipBack');
+    if(!card||!back)return;
+    if(!back.classList.contains('ps-rdv-back'))back.classList.add('ps-rdv-back');
+    if(!back.querySelector('h3'))back.innerHTML='<h3>▦ &nbsp;Mon prochain rendez-vous</h3><div class="ps-rdv-empty">Chargement de vos rendez-vous…</div>';
+  }
+  window.addEventListener('ps-card-flipped',refresh);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
+})();
+</script>
 </body></html>
