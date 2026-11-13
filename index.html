@@ -7417,4 +7417,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<!-- V6.47 : suppression ciblée des anciennes cartes PC et finition de l'aperçu client -->
+<style id="rnf-v647-desktop-fixes">
+@media screen and (min-width:960px){
+  /* Les quatre cartes dupliquées sont créées par dashboardHTML() dans mc-dashboard,
+     et NON par une seconde .ps-pc-features. Conserver les cinq cartes de psPcHome. */
+  #merchantMode #mc-dashboard .mc-quick-grid.mc-validated-cards {display:none!important;}
+  /* Ancien raccourci scanner, redondant avec les deux actions du module Recherche client. */
+  #merchantMode #mc-dashboard .mc-scan-quick-wrap {display:none!important;}
+  /* L'aperçu garde les deux actions côte à côte, avec icônes et textes équilibrés. */
+  #rnfV645Preview .rnf-v645-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;}
+  #rnfV645Preview .rnf-v645-actions button{
+    display:flex!important;flex-direction:row!important;align-items:center!important;
+    justify-content:center!important;gap:9px!important;min-height:64px!important;
+    padding:11px 12px!important;font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif!important;
+    font-size:13px!important;font-weight:800!important;line-height:1.25!important;
+    letter-spacing:0!important;text-align:center!important;white-space:normal!important;
+  }
+  #rnfV645Preview .rnf-v645-actions button img{
+    display:block!important;width:24px!important;height:24px!important;
+    flex:0 0 24px!important;object-fit:contain!important;margin:0!important;
+  }
+  #rnfV645Preview .rnf-v645-full{font-size:14px!important;text-align:center!important;}
+}
+</style>
 </body></html>
