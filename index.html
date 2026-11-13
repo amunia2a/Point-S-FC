@@ -7442,4 +7442,46 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #rnfV645Preview .rnf-v645-full{font-size:14px!important;text-align:center!important;}
 }
 </style>
+<!-- V6.48 : lecture cohérente des soldes et opérations depuis Supabase, sans toucher aux écritures/MFA -->
+<style id="rnf-v648-history-style">
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:15px 12px;border-bottom:1px solid #e1e9f4;color:#174580}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-row:last-child{border-bottom:0}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-icon{width:40px;height:40px;border-radius:50%;background:#eaf4ff;display:grid;place-items:center;color:#15549b;font-size:23px;font-weight:700}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-icon.plus{background:#e5f8ec;color:#078e4d}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-row strong{display:block;font-size:13px;font-weight:800}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-row small{display:block;margin-top:4px;font-size:12px;color:#65768f}
+#merchantMode #mc-clientdetail #mcHistory .rnf-v648-row time{font-size:11px;color:#77869c;text-align:right}
+</style>
+<script id="rnf-v648-supabase-consistency">
+(function(){'use strict';
+// Lecture seule : les ajouts et retraits restent exclusivement gérés par les RPC existantes.
+const SB='https://lsffbioatihkjtiutgma.supabase.co', KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+let token=null, serial=0, timer=null;
+const $=id=>document.getElementById(id);
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function get(path){if(!token)throw Error('Session commerçant requise');const r=await fetch(SB+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+token,Accept:'application/json','Cache-Control':'no-cache'},cache:'no-store'});const d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.message||'Lecture Supabase refusée');return d;}
+function selected(){return $('mc-clientdetail')?.dataset.psSelectedClientId||null}
+function activeGarage(){return $('mcGarage')?.value||'Ajaccio'}
+function historyRows(ops){return ops.map(op=>{const n=Number(op.variation_points)||0,credit=n>0;const label=credit?'Points ajoutés':(op.type_operation==='recompense'?'Récompense attribuée':'Points débités');const date=op.created_at?new Date(op.created_at):null;const formatted=date&&Number.isFinite(date.getTime())?date.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';return '<div class="rnf-v648-row"><span class="rnf-v648-icon '+(credit?'plus':'')+'" aria-hidden="true">'+(credit?'+':'♔')+'</span><span><strong>'+escape(label)+'</strong><small>'+escape((n>0?'+':'')+n+' points')+(op.commentaire?' · '+escape(op.commentaire):'')+'</small></span><time>'+escape(formatted)+'</time></div>'}).join('')||'<p class="mc-note">Aucune opération enregistrée pour ce client.</p>'}
+async function refresh(){const id=selected(),v=$('mc-clientdetail');if(!token||!id||!v)return;const run=++serial,city=activeGarage();try{
+ const garages=await get('garages?select=id,ville');const garage=garages.find(g=>String(g.ville||'').toLowerCase()===city.toLowerCase());if(!garage)throw Error('Garage introuvable');
+ const accounts=await get('comptes_fidelite?select=id,solde_points&client_id=eq.'+encodeURIComponent(id)+'&garage_id=eq.'+encodeURIComponent(garage.id)+'&limit=1');if(!accounts.length)throw Error('Compte fidélité introuvable');
+ const account=accounts[0];const ops=await get('operations_fidelite?select=id,type_operation,variation_points,commentaire,created_at&compte_id=eq.'+encodeURIComponent(account.id)+'&order=created_at.desc&limit=1000');
+ if(run!==serial||selected()!==id||activeGarage()!==city)return;
+ const balance=v.querySelector('#mcBalance');if(balance)balance.textContent=Number(account.solde_points).toLocaleString('fr-FR');
+ const hist=v.querySelector('#mcHistory');if(hist){hist.innerHTML=historyRows(ops);hist.dataset.rnfV648Account=account.id;}
+ // La liste Clients et le moteur de recherche possèdent leurs propres requêtes : les relancer.
+ window.dispatchEvent(new Event('rnf-refresh-merchant-clients'));
+ }catch(err){if(run===serial){console.warn('Synchronisation fidélité :',err.message);const hist=v.querySelector('#mcHistory');if(hist)hist.innerHTML='<p class="mc-note">Historique indisponible : '+escape(err.message)+'</p>';}}
+}
+function schedule(delay=200){clearTimeout(timer);timer=setTimeout(refresh,delay)}
+window.addEventListener('ps-auth-session',e=>{token=e.detail?.merchant?e.detail.token:null;serial++;if(token)schedule(400)});
+window.addEventListener('ps-rpc-updated',()=>schedule(250));
+window.addEventListener('rnf-fidelite-operation-ok',()=>schedule(300));
+document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'){serial++;schedule(250)}});
+document.addEventListener('click',e=>{if(e.target.closest?.('#mclList .mcl-card'))schedule(550);if(e.target.closest?.('#mc-clientdetail [data-mcf-tab="historique"]'))schedule(120)});
+function start(){const v=$('mc-clientdetail');if(!v)return;new MutationObserver(m=>{if(m.some(x=>x.attributeName==='data-ps-selected-client-id')){serial++;schedule(250)}}).observe(v,{attributes:true,attributeFilter:['data-ps-selected-client-id']});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
 </body></html>
