@@ -1,20 +1,25 @@
-# Point S Fidélité V6.31 — À tester
+# Point S Fidélité — V6.41 (préparation Supabase)
 
-Base : V6.30.
+Base : V6.40. Aucun déploiement.
 
-## Modifications ciblées (commerçant PC uniquement, ≥ 960 px)
-- Masquage du bouton dédié ouvrir/fermer.
-- Clic dans la barre latérale : alterne entre menu compact et menu déployé. Les boutons de rubrique conservent leur navigation existante et provoquent aussi le changement d’état.
-- Icônes et textes du menu en bleu `#073B94`, y compris l’élément actif.
-- Logos S fermé et Point S ouvert conservés.
+## Modifications PC commerçant (≥ 960 px)
+- Header agrandi et épuré, notifications et icône carte masquées sur PC uniquement.
+- Avatar cliquable (clavier inclus) : sélection PNG/JPEG/WebP, maximum 3 Mo, aperçu rond.
+- Même aperçu et bouton « Modifier la photo » dans Paramètres.
+- Icônes officielles garage et Point S fournies intégrées en base64, sans fichiers externes.
+- Sélecteur de garage existant conservé. Aucun moteur de recherche ajouté.
 
-## Préservé
-- Interface mobile, fonctionnalités, Supabase, MFA, RLS, accès, données, cartes, moteur de recherche et contenu des vues.
+## À configurer dans Supabase (non activé)
+- Stockage privé des avatars dans Storage, contrôles d'accès par identifiant Auth.
+- Profil commerçant avec nom affiché et référence d'avatar.
+- Préférence garage persistée uniquement parmi les garages autorisés.
+- Lecture/écriture sécurisée et synchronisation multi-appareils après validation du schéma et des RLS.
 
-## Tests à réaliser
-1. PC : cliquer dans la barre, sur le logo, puis sur une rubrique ; vérifier ouverture/fermeture et navigation.
-2. Vérifier les six icônes en bleu `#073B94` (actives/inactives).
-3. Vérifier les deux logos et la largeur du contenu dans les deux états.
-4. Vérifier le mobile client et commerçant inchangé.
+**Important :** la photo n'est qu'un aperçu temporaire et n'est PAS enregistrée dans Supabase. Le nom continue d'être enregistré localement par le code V6.35 existant. Ne pas considérer la persistance comme opérationnelle.
 
-Contrôles : insertion localisée CSS/JS ; pas de test navigateur ni Supabase. En attente de validation.
+## Contrôles à effectuer
+1. Sur PC, vérifier taille du header, absence de notification, garage et prénom.
+2. Cliquer sur l'avatar, sélectionner une image, ouvrir Paramètres et vérifier le même aperçu.
+3. Vérifier les PNG officiels et le bouton photo dans Paramètres.
+4. Recharger : l'aperçu disparaît (comportement temporaire attendu).
+5. Vérifier que la version mobile, les accès commerçants, RLS, MFA et les pages existantes sont inchangés.
