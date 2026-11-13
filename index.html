@@ -7993,4 +7993,59 @@ body.ps-client-authorized #clientHeaderClean .ch-garage span,body.ps-client-auth
  // L'icône de localisation conserve l'accès au choix du garage existant.
 })();
 </script>
+
+<!-- V6.71 : sélecteur de garage commerçant sur mobile uniquement. Aucun changement PC. -->
+<style id="ps-v671-mobile-merchant-garage-css">
+@media(max-width:767px){
+ #merchantMode .mc-client-header .mc-garage-clean{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin-left:auto!important}
+ #merchantMode .mc-client-header .mc-garage-clean-ui{display:none!important}
+ #merchantMode .mc-client-header .mc-garage-clean #mcGarage{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;inset:auto!important}
+ #merchantMode .mc-client-header .ps671-pin{display:grid!important;place-items:center!important;width:46px!important;height:46px!important;border-radius:50%!important;border:0!important;background:#eaf3ff!important;color:#14549b!important;cursor:pointer!important;padding:11px!important}
+ #merchantMode .mc-client-header .ps671-pin svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+}
+#ps671MerchantGarageModal[hidden]{display:none!important}
+#ps671MerchantGarageModal{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:center;justify-content:center;background:rgba(13,36,74,.55);padding:20px}
+#ps671MerchantGarageModal .ps671-dialog{width:min(100%,400px);max-height:calc(100dvh - 40px);overflow:auto;background:#fff;border-radius:25px;padding:27px 22px;box-shadow:0 20px 65px rgba(10,33,74,.2);text-align:center;font-family:inherit}
+#ps671MerchantGarageModal .ps671-symbol{width:65px;height:65px;display:grid;place-items:center;margin:0 auto 14px;border-radius:18px;background:#eaf3ff;color:#14549b}
+#ps671MerchantGarageModal .ps671-symbol svg{width:31px;height:31px;stroke:currentColor;fill:none;stroke-width:1.8}
+#ps671MerchantGarageModal h2{font-size:23px;line-height:1.2;color:#174579;margin:0 0 10px;font-weight:800}
+#ps671MerchantGarageModal p{color:#748399;font-size:14px;line-height:1.5;margin:0 0 22px}
+#ps671MerchantGarageModal .ps671-options{display:grid;gap:10px;text-align:left}
+#ps671MerchantGarageModal .ps671-option{display:flex;align-items:center;gap:12px;width:100%;border:1px solid #dce4ee;background:#fff;border-radius:14px;padding:15px;color:#174579;font:700 16px inherit;text-align:left;cursor:pointer}
+#ps671MerchantGarageModal .ps671-option[aria-checked="true"]{border:2px solid #20b568;background:#f4fbf7}
+#ps671MerchantGarageModal .ps671-option svg{width:22px;height:22px;flex-shrink:0;stroke:#20a75d;fill:none;stroke-width:1.8}
+#ps671MerchantGarageModal .ps671-check{margin-left:auto;color:#20a75d;font-size:23px}
+#ps671MerchantGarageModal .ps671-confirm{width:100%;margin-top:23px;padding:16px;border:0;border-radius:13px;background:#0b55a0;color:white;font:700 16px inherit;cursor:pointer}
+#ps671MerchantGarageModal .ps671-confirm:disabled{opacity:.45;cursor:default}
+#ps671MerchantGarageModal .ps671-close{position:absolute;right:12px;top:10px;border:0;background:transparent;color:#64748b;font-size:25px;cursor:pointer}
+#ps671MerchantGarageModal .ps671-dialog{position:relative}
+</style>
+<script id="ps-v671-mobile-merchant-garage-js">
+(function(){
+ const mobile=window.matchMedia('(max-width:767px)');
+ const pinSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+ let pending=null;
+ function source(){return document.querySelector('#merchantMode #mcGarage')}
+ function allowed(){const s=source();return s?Array.from(s.options).filter(o=>o.value&&!o.disabled&&!o.hidden):[]}
+ function modal(){let m=document.getElementById('ps671MerchantGarageModal');if(m)return m;
+ m=document.createElement('div');m.id='ps671MerchantGarageModal';m.hidden=true;m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','Sélectionner un garage');
+ m.innerHTML='<div class="ps671-dialog"><button class="ps671-close" type="button" aria-label="Fermer">×</button><div class="ps671-symbol">'+pinSvg+'</div><h2>Sélectionner un garage</h2><p>Choisissez le garage dont vous souhaitez gérer l’activité.</p><div class="ps671-options" role="radiogroup" aria-label="Garages autorisés"></div><button class="ps671-confirm" type="button">Confirmer mon garage</button></div>';
+ document.body.appendChild(m);
+ m.querySelector('.ps671-close').addEventListener('click',close);
+ m.addEventListener('click',e=>{if(e.target===m)close()});
+ m.querySelector('.ps671-confirm').addEventListener('click',()=>{const s=source();if(!s||!allowed().some(o=>o.value===pending))return;if(s.value!==pending){s.value=pending;s.dispatchEvent(new Event('change',{bubbles:true}));}close()});
+ return m;
+ }
+ function close(){const m=document.getElementById('ps671MerchantGarageModal');if(m)m.hidden=true}
+ function open(){if(!mobile.matches)return;const m=modal(),opts=allowed();pending=source()?.value||null;const box=m.querySelector('.ps671-options');box.replaceChildren();
+ if(!opts.length){const p=document.createElement('p');p.textContent='Aucun garage autorisé pour ce compte.';box.appendChild(p)}
+ opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='ps671-option';b.setAttribute('role','radio');b.setAttribute('aria-checked',String(o.value===pending));const label=(o.textContent||o.value).trim();b.innerHTML=pinSvg+'<span></span><span class="ps671-check"></span>';b.querySelector('span').textContent=/point s/i.test(label)?label:'Point S '+label;b.addEventListener('click',()=>{pending=o.value;box.querySelectorAll('.ps671-option').forEach((x,i)=>{const checked=opts[i].value===pending;x.setAttribute('aria-checked',String(checked));x.querySelector('.ps671-check').textContent=checked?'✓':''})});box.appendChild(b)});
+ box.querySelectorAll('.ps671-option').forEach((b,i)=>b.querySelector('.ps671-check').textContent=opts[i].value===pending?'✓':'');m.querySelector('.ps671-confirm').disabled=!opts.length;m.hidden=false;
+ }
+ function init(){if(!mobile.matches)return;const shell=document.querySelector('#merchantMode .mc-client-header .mc-garage-clean');if(!shell||shell.querySelector('.ps671-pin'))return;const btn=document.createElement('button');btn.type='button';btn.className='ps671-pin';btn.setAttribute('aria-label','Sélectionner un garage');btn.innerHTML=pinSvg;btn.addEventListener('click',open);shell.appendChild(btn)}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',init);
+ const root=document.getElementById('merchantMode');if(root)new MutationObserver(()=>{if(mobile.matches)init()}).observe(root,{childList:true,subtree:false});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+})();
+</script>
 </body></html>
