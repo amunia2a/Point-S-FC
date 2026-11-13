@@ -7277,4 +7277,78 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(mq.addEventListener)mq.addEventListener('change',function(){if(mq.matches)hideOld()});
 })();
 </script>
+
+<!-- V6.44 — finition PC : typographie, titres et sélection de photo fiable -->
+<style id="ps-v644-desktop-polish">
+@media (min-width:960px) {
+  /* Une seule typographie cohérente sur toute la zone commerçant PC. */
+  #merchantMode, #merchantMode button, #merchantMode input, #merchantMode select,
+  #merchantMode textarea, #merchantMode .ps642-header,
+  #psMerchantSettings, #psMerchantSettings button, #psMerchantSettings input {
+    font-family:inherit!important;
+  }
+  #merchantMode #psPcHome .ps-pc-features .ps-pc-feature b {
+    color:#073B94!important;
+    font-weight:750!important;
+  }
+  #merchantMode .ps642-avatar {overflow:visible!important;isolation:isolate}
+  #merchantMode .ps642-avatar > svg {width:35px;height:35px}
+  #merchantMode .ps642-avatar > img {border-radius:50%;overflow:hidden}
+  /* Petit bouton appareil-photo bien centré, entièrement visible. */
+  #merchantMode .ps642-avatar:after {content:none!important}
+  #merchantMode .ps642-avatar .ps644-camera {
+    position:absolute;right:-4px;bottom:-3px;width:27px;height:27px;
+    border:3px solid #f3f8ff;border-radius:50%;background:#073B94;
+    color:white;display:grid;place-items:center;z-index:3;box-sizing:border-box;
+  }
+  #merchantMode .ps642-avatar .ps644-camera svg {width:15px;height:15px}
+  #merchantMode .ps642-avatar:focus-visible,
+  #psMerchantSettings .ps-v641-photo-btn:focus-visible {outline:3px solid #63a2f4;outline-offset:4px}
+  #psMerchantSettings .ps-v641-profile-avatar {overflow:hidden}
+  #psMerchantSettings .ps-v641-profile-avatar img {width:100%;height:100%;object-fit:cover}
+}
+</style>
+<script id="ps-v644-profile-fix">
+(function(){
+ 'use strict';
+ const mq=window.matchMedia('(min-width:960px)');
+ let preview=null;
+ const camera='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3"/></svg>';
+ const person='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-8 8-8s8 3.5 8 8"/></svg>';
+ function input(){
+   let el=document.getElementById('ps644ProfileInput');
+   if(!el){el=document.createElement('input');el.type='file';el.id='ps644ProfileInput';el.accept='image/png,image/jpeg,image/webp';el.hidden=true;document.body.appendChild(el);
+    el.addEventListener('change',function(){const file=el.files&&el.files[0];if(!file)return;
+      if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>3*1024*1024){alert('Choisissez une image PNG, JPEG ou WebP de 3 Mo maximum.');el.value='';return}
+      if(preview)URL.revokeObjectURL(preview);preview=URL.createObjectURL(file);paint();el.value='';
+    });
+   }
+   return el;
+ }
+ function paint(){
+   const a=document.querySelector('#ps642Header .ps642-avatar');
+   if(a){let img=a.querySelector('img');if(img){if(preview){img.src=preview;img.hidden=false}else{img.hidden=true;img.removeAttribute('src')}}}
+   const b=document.querySelector('#psMerchantSettings .ps-v641-profile-avatar');
+   if(b){b.replaceChildren();if(preview){const img=document.createElement('img');img.src=preview;img.alt='Aperçu de votre photo';b.appendChild(img)}else b.innerHTML=person}
+ }
+ function setup(){if(!mq.matches)return;input();const a=document.querySelector('#ps642Header .ps642-avatar');
+   if(a&&!a.querySelector('.ps644-camera')){const c=document.createElement('span');c.className='ps644-camera';c.setAttribute('aria-hidden','true');c.innerHTML=camera;a.appendChild(c)}
+   const settings=document.querySelector('#psMerchantSettings .ps-v641-photo-btn');
+   if(settings)settings.setAttribute('aria-label','Choisir une photo de profil');
+   paint();
+ }
+ /* Capture avant les anciens gestionnaires V6.41/V6.42 : leur input était vidé trop tôt. */
+ document.addEventListener('click',function(e){if(!mq.matches)return;
+   const trigger=e.target.closest('#ps642Header .ps642-avatar, #psMerchantSettings .ps-v641-photo-btn');
+   if(!trigger)return;
+   e.preventDefault();e.stopImmediatePropagation();input().click();
+ },true);
+ document.addEventListener('keydown',function(e){if(!mq.matches||!(e.key==='Enter'||e.key===' '))return;
+   const trigger=e.target.closest('#ps642Header .ps642-avatar, #psMerchantSettings .ps-v641-photo-btn');
+   if(!trigger)return;e.preventDefault();e.stopImmediatePropagation();input().click();
+ },true);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+ window.addEventListener('load',setup);
+})();
+</script>
 </body></html>

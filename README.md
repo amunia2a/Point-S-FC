@@ -1,25 +1,14 @@
-# Point S Fidélité — V6.41 (préparation Supabase)
+# Point S Fidélité V6.44 — Correctif PC commerçant
 
-Base : V6.40. Aucun déploiement.
+Base : V6.43. Aucun changement intentionnel au parcours mobile, au MFA, à Supabase ou aux permissions commerçants.
 
-## Modifications PC commerçant (≥ 960 px)
-- Header agrandi et épuré, notifications et icône carte masquées sur PC uniquement.
-- Avatar cliquable (clavier inclus) : sélection PNG/JPEG/WebP, maximum 3 Mo, aperçu rond.
-- Même aperçu et bouton « Modifier la photo » dans Paramètres.
-- Icônes officielles garage et Point S fournies intégrées en base64, sans fichiers externes.
-- Sélecteur de garage existant conservé. Aucun moteur de recherche ajouté.
+- L’icône crayon de l’avatar PC est remplacée par un pictogramme appareil-photo dans un cercle bleu correctement positionné.
+- Le clic sur l’avatar ou « Modifier la photo » dans les paramètres ouvre un sélecteur de fichier dédié. Le précédent sélecteur était vidé par un gestionnaire avant le rafraîchissement du nouveau header.
+- Formats acceptés : PNG, JPEG, WebP (3 Mo maximum). L’aperçu se synchronise dans le header et les paramètres pendant la session. **Aucune sauvegarde Supabase n’est encore active.**
+- Uniformisation de la police par héritage de la police de la page et titres des quatre cartes en bleu #073B94.
 
-## À configurer dans Supabase (non activé)
-- Stockage privé des avatars dans Storage, contrôles d'accès par identifiant Auth.
-- Profil commerçant avec nom affiché et référence d'avatar.
-- Préférence garage persistée uniquement parmi les garages autorisés.
-- Lecture/écriture sécurisée et synchronisation multi-appareils après validation du schéma et des RLS.
-
-**Important :** la photo n'est qu'un aperçu temporaire et n'est PAS enregistrée dans Supabase. Le nom continue d'être enregistré localement par le code V6.35 existant. Ne pas considérer la persistance comme opérationnelle.
-
-## Contrôles à effectuer
-1. Sur PC, vérifier taille du header, absence de notification, garage et prénom.
-2. Cliquer sur l'avatar, sélectionner une image, ouvrir Paramètres et vérifier le même aperçu.
-3. Vérifier les PNG officiels et le bouton photo dans Paramètres.
-4. Recharger : l'aperçu disparaît (comportement temporaire attendu).
-5. Vérifier que la version mobile, les accès commerçants, RLS, MFA et les pages existantes sont inchangés.
+## Tests à faire
+1. Sur PC, cliquer sur l’avatar puis choisir une photo. Vérifier qu’elle apparaît dans le header et dans les paramètres.
+2. Depuis les paramètres, choisir une autre photo. Vérifier la synchronisation de l’aperçu.
+3. Vérifier les titres Fidélité, Actus, Clients et Avis Google, ainsi que la police du header.
+4. Vérifier la version mobile, les garages autorisés, la navigation et les flux MFA avant déploiement.
