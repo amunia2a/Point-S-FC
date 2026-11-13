@@ -7789,7 +7789,7 @@ function clientGarageLabel(){
 }
 const appointmentIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg>';
 // À renseigner après confirmation des numéros par l'utilisateur.
-const psRdvPhoneByGarage={'Point S Ajaccio':null,'Point S Alata':null};
+const psRdvPhoneByGarage={'Point S Ajaccio':'0495226440','Point S Alata':'0495290190'};
 function emptyClientAppointment(back){
   const garage=clientGarageLabel();
   back.innerHTML='<h3>'+appointmentIcon+' Mon prochain rendez-vous</h3>'+
@@ -7803,7 +7803,7 @@ function emptyClientAppointment(back){
     e.preventDefault();e.stopPropagation();
     const selected=clientGarageLabel();
     const phone=selected&&psRdvPhoneByGarage[selected];
-    if(!phone){alert(selected?'Le numéro de '+selected+' doit encore être renseigné.':'Veuillez sélectionner votre garage.');return;}
+    if(!phone){alert(selected?'Le numéro de '+selected+' n’est pas encore configuré.':'Veuillez sélectionner votre garage.');return;}
     const clean=String(phone).replace(/[^+\d]/g,'');
     if(!/^\+?\d{8,15}$/.test(clean)){alert('Numéro du garage invalide.');return;}
     window.location.href='tel:'+clean;
@@ -7814,7 +7814,7 @@ async function renderClient(){
   const back=$('psFlipBack');if(!back)return; if(!clientToken){back.classList.add('ps-rdv-back');back.innerHTML='<h3>▦ &nbsp;Mon prochain rendez-vous</h3><div class="ps-rdv-empty">Connectez-vous pour consulter vos rendez-vous.</div>';return;}
   const serial=++rdvRequestSerial,token=clientToken;
   back.classList.add('ps-rdv-back');
-  back.innerHTML='<h3>▦ &nbsp;Mon prochain rendez-vous</h3><div class="ps-rdv-empty">Chargement du rendez-vous…</div>';
+  if(!back.querySelector('.ps-rdv-v665, .ps-rdv-no-v666'))back.innerHTML='<h3>'+appointmentIcon+' Mon prochain rendez-vous</h3><div class="ps-rdv-white ps-rdv-no-v666 ps-rdv-loading-v667"><div class="ps-rdv-no-icon-v666">'+appointmentIcon+'</div><strong>Chargement de votre rendez-vous…</strong></div>';
   try{
     // Le RPC utilise auth.uid() + MFA côté serveur et ne renvoie jamais note_interne.
     // L'API renvoie un tableau JSON, même lorsqu'il n'y a aucun rendez-vous.
@@ -7900,7 +7900,7 @@ window.addEventListener('focus',poll);document.addEventListener('visibilitychang
     const back=document.getElementById('psFlipBack');
     if(!card||!back)return;
     if(!back.classList.contains('ps-rdv-back'))back.classList.add('ps-rdv-back');
-    if(!back.querySelector('h3'))back.innerHTML='<h3>▦ &nbsp;Mon prochain rendez-vous</h3><div class="ps-rdv-empty">Chargement de vos rendez-vous…</div>';
+    if(!back.querySelector('.ps-rdv-v665, .ps-rdv-no-v666'))back.innerHTML='<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> Mon prochain rendez-vous</h3><div class="ps-rdv-white ps-rdv-no-v666 ps-rdv-loading-v667"><strong>Chargement de votre rendez-vous…</strong></div>';
   }
   window.addEventListener('ps-card-flipped',refresh);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
@@ -7956,4 +7956,41 @@ window.addEventListener('focus',poll);document.addEventListener('visibilitychang
 #psFlipBack.ps-rdv-back .ps-rdv-no-contact{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:#0754b2;color:#fff;border-radius:10px;padding:9px 6px;font-size:clamp(11px,3.2vw,14px);font-weight:750;cursor:pointer;flex:none}
 #psFlipBack.ps-rdv-back .ps-rdv-no-contact svg{width:18px;height:18px;flex:none}
 </style>
+<style id="rnf-v667-no-flash">
+/* Cache tout contenu hérité sur le verso jusqu’au rendu V6.65/V6.66. */
+#psRebuiltCard.ps-flipped #psFlipBack.ps-rdv-back > :not(h3):not(.ps-rdv-v665):not(.ps-rdv-no-v666):not(.ps-rdv-empty){display:none!important}
+#psFlipBack.ps-rdv-back .ps-rdv-loading-v667{min-height:175px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+</style>
+
+<style id="ps-v669-garage-style">
+body.ps-client-authorized #clientHeaderClean .ch-garage{width:42px!important;min-width:42px!important;max-width:42px!important;padding:8px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important}
+body.ps-client-authorized #clientHeaderClean .ch-garage span,body.ps-client-authorized #clientHeaderClean .ch-garage em{display:none!important}
+#ps669GarageOverlay[hidden]{display:none!important}
+#ps669GarageOverlay{position:fixed;inset:0;z-index:2147483000;background:rgba(6,28,62,.64);display:flex;align-items:center;justify-content:center;padding:20px;font-family:ui-rounded,system-ui,-apple-system,sans-serif}
+#ps669GarageOverlay .ps669-dialog{background:white;border-radius:23px;padding:25px 21px 22px;width:min(100%,390px);box-shadow:0 20px 70px #001b4060;text-align:center;color:#15334f}
+#ps669GarageOverlay .ps669-icon{width:60px;height:60px;border-radius:17px;background:#eaf4ff;display:grid;place-items:center;margin:0 auto 13px;color:#0755a3}
+#ps669GarageOverlay .ps669-icon svg{width:29px;height:29px}
+#ps669GarageOverlay h2{font-size:21px;font-weight:850;margin:0 0 8px;color:#104984}
+#ps669GarageOverlay p{font-size:13px;line-height:1.55;color:#6a7d91;margin:0 0 20px}
+#ps669GarageOverlay .ps669-choice{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1.5px solid #dce5ee;border-radius:13px;padding:15px;margin:9px 0;text-align:left;color:#183955;font-size:15px;font-weight:750;cursor:pointer}
+#ps669GarageOverlay .ps669-choice[aria-checked="true"]{border:2px solid #19ac61;background:#f8fffa;padding:14.5px}
+#ps669GarageOverlay .ps669-choice svg{width:20px;height:20px;color:#138d56;flex:none}
+#ps669GarageOverlay .ps669-choice .ps669-check{margin-left:auto;color:#18a65b;font-size:21px}
+#ps669GarageOverlay .ps669-confirm{background:#0755a3;color:#fff;border:0;border-radius:12px;padding:15px;width:100%;font-size:15px;font-weight:800;margin-top:15px;cursor:pointer}
+#ps669GarageOverlay .ps669-confirm:disabled{opacity:.45;cursor:not-allowed}
+</style>
+<div id="ps669GarageOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="ps669GarageTitle"><div class="ps669-dialog"><div class="ps669-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h2 id="ps669GarageTitle">Choisissez votre garage</h2><p>Sélectionnez votre centre Point S préféré pour personnaliser votre espace fidélité.</p><div role="radiogroup" aria-label="Garage préféré"><button type="button" class="ps669-choice" data-garage="Point S Ajaccio" role="radio" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Point S Ajaccio<span class="ps669-check"></span></button><button type="button" class="ps669-choice" data-garage="Point S Alata" role="radio" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Point S Alata<span class="ps669-check"></span></button></div><button type="button" class="ps669-confirm" disabled>Confirmer mon garage</button></div></div>
+<script id="ps-v669-garage-onboarding">
+(function(){
+ const modal=document.getElementById('ps669GarageOverlay');if(!modal)return;
+ const choices=[...modal.querySelectorAll('.ps669-choice')],confirm=modal.querySelector('.ps669-confirm');
+ let selected=null,accountKey=null;
+ function uidFromToken(token){try{const part=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(part)).sub||null}catch(e){return null}}
+ function select(name){selected=name;choices.forEach(b=>{const on=b.dataset.garage===name;b.setAttribute('aria-checked',String(on));b.querySelector('.ps669-check').textContent=on?'✓':''});confirm.disabled=!selected}
+ choices.forEach(b=>b.addEventListener('click',()=>select(b.dataset.garage)));
+ confirm.addEventListener('click',()=>{if(!selected||!accountKey)return;try{localStorage.setItem(accountKey,selected)}catch(e){};if(typeof window.selectGarage==='function')window.selectGarage(selected);else{localStorage.setItem('pointsS_selected_garage',selected);window.syncPreferredGarage?.(selected)};modal.hidden=true;window.dispatchEvent(new Event('ps-card-flipped'))});
+ window.addEventListener('ps-auth-session',e=>{modal.hidden=true;accountKey=null;selected=null;const d=e.detail;if(!d?.token||d.merchant)return;const uid=uidFromToken(d.token);if(!uid)return;accountKey='ps669_preferred_garage_'+uid;let stored=null;try{stored=localStorage.getItem(accountKey)}catch(e){};if(stored==='Point S Ajaccio'||stored==='Point S Alata'){localStorage.setItem('pointsS_selected_garage',stored);window.syncPreferredGarage?.(stored);return}select(null);setTimeout(()=>{if(accountKey&&document.body.classList.contains('ps-client-authorized'))modal.hidden=false},350)});
+ // L'icône de localisation conserve l'accès au choix du garage existant.
+})();
+</script>
 </body></html>
