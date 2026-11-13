@@ -7779,8 +7779,7 @@ async function api(token,path,options={}){if(!token)throw Error('Connexion requi
 const dayTime=d=>new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Paris'}).format(new Date(d));
 function currentGarage(){return $('mcGarage')?.value||''}
 function mount(){if(!$('merchantMode'))return;const home=$('psPcHome');const features=home?.querySelector('.ps-pc-features');if(features&&!features.querySelector('.ps-rdv-home-card')){const b=document.createElement('button');b.className='ps-pc-card ps-pc-feature ps-rdv-home-card';b.type='button';b.innerHTML='<span class="ps-pc-icon ps-rdv-home-icon"><svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15l2.5 2.5L16 12"/></svg></span><span><b>Rendez-vous</b><small>Planifier et gérer</small></span>';b.onclick=()=>open();features.append(b)}
-if(home && !home.querySelector('.ps-rdv-mobile-card')){const area=home.querySelector('.ps-pc-features');if(area){const mobile=document.createElement('button');mobile.type='button';mobile.className='ps-pc-card ps-pc-feature ps-rdv-mobile-card';mobile.innerHTML='<span class="ps-pc-icon ps-rdv-home-icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg></span><b>Rendez-vous</b><small>Consulter et planifier</small>';mobile.onclick=()=>open();area.append(mobile)}}
-const wrap=$('merchantMode')?.querySelector('.mc-wrap');if(wrap&&!$('mc-appointments')){const view=document.createElement('div');view.id='mc-appointments';view.className='mc-view';view.innerHTML=`<div class="ps-rdv-wrap"><div class="ps-rdv-heading"><h2>Rendez-vous</h2><button class="ps-rdv-btn" id="psRdvNew">+ Nouveau rendez-vous</button></div><section class="ps-rdv-panel" id="psRdvForm" hidden><h3>Planifier un rendez-vous</h3><div class="ps-rdv-field"><label>Rechercher un client (nom ou code)</label><input id="psRdvSearch" placeholder="Nom, prénom ou code client" autocomplete="off"></div><div class="ps-rdv-results" id="psRdvResults"></div><div class="ps-rdv-selected" id="psRdvSelected" hidden></div><div class="ps-rdv-row"><div class="ps-rdv-field"><label>Date</label><input id="psRdvDate" type="date"></div><div class="ps-rdv-field"><label>Heure</label><input id="psRdvTime" type="time" value="09:00"></div></div><div class="ps-rdv-row"><div class="ps-rdv-field"><label>Durée (minutes)</label><input id="psRdvDuration" type="number" min="15" max="480" value="60"></div><div class="ps-rdv-field"><label>Garage</label><select id="psRdvGarage"></select></div></div><div class="ps-rdv-field"><label>Prestation / description</label><textarea id="psRdvService" rows="3" maxlength="500" placeholder="Ex. Montage de 4 pneumatiques et contrôle de géométrie"></textarea></div><div class="ps-rdv-field"><label>Note interne (non visible par le client)</label><textarea id="psRdvNote" rows="2"></textarea></div><button class="ps-rdv-btn" id="psRdvSave">Enregistrer le rendez-vous</button><div class="ps-rdv-message" id="psRdvMessage" role="status"></div></section><section class="ps-rdv-panel ps-rdv-list-panel"><div class="ps-rdv-mobile-tools"><label for="psRdvDayFilter">Consulter une date</label><input id="psRdvDayFilter" type="date"><button type="button" id="psRdvAllDays">Tous les rendez-vous</button></div><h3>Prochains rendez-vous</h3><div id="psRdvList">Chargement…</div></section></div>`;wrap.append(view);$('psRdvNew').onclick=()=>{$('psRdvForm').hidden=!$('psRdvForm').hidden;};$('psRdvSearch').oninput=()=>searchClients();$('psRdvSave').onclick=save; $('psRdvDayFilter').onchange=()=>list().catch(showError);$('psRdvAllDays').onclick=()=>{$('psRdvDayFilter').value='';list().catch(showError)};}
+const wrap=$('merchantMode')?.querySelector('.mc-wrap');if(wrap&&!$('mc-appointments')){const view=document.createElement('div');view.id='mc-appointments';view.className='mc-view';view.innerHTML=`<div class="ps-rdv-wrap"><div class="ps-rdv-heading"><h2>Rendez-vous</h2><button class="ps-rdv-btn" id="psRdvNew">+ Nouveau rendez-vous</button></div><section class="ps-rdv-panel" id="psRdvForm" hidden><h3>Planifier un rendez-vous</h3><div class="ps-rdv-field"><label>Rechercher un client (nom ou code)</label><input id="psRdvSearch" placeholder="Nom, prénom ou code client" autocomplete="off"></div><div class="ps-rdv-results" id="psRdvResults"></div><div class="ps-rdv-selected" id="psRdvSelected" hidden></div><div class="ps-rdv-row"><div class="ps-rdv-field"><label>Date</label><input id="psRdvDate" type="date"></div><div class="ps-rdv-field"><label>Heure</label><input id="psRdvTime" type="time" value="09:00"></div></div><div class="ps-rdv-row"><div class="ps-rdv-field"><label>Durée (minutes)</label><input id="psRdvDuration" type="number" min="15" max="480" value="60"></div><div class="ps-rdv-field"><label>Garage</label><select id="psRdvGarage"></select></div></div><div class="ps-rdv-field"><label>Prestation / description</label><textarea id="psRdvService" rows="3" maxlength="500" placeholder="Ex. Montage de 4 pneumatiques et contrôle de géométrie"></textarea></div><div class="ps-rdv-field"><label>Note interne (non visible par le client)</label><textarea id="psRdvNote" rows="2"></textarea></div><button class="ps-rdv-btn" id="psRdvSave">Enregistrer le rendez-vous</button><div class="ps-rdv-message" id="psRdvMessage" role="status"></div></section><section class="ps-rdv-panel"><h3>Prochains rendez-vous</h3><div id="psRdvList">Chargement…</div></section></div>`;wrap.append(view);$('psRdvNew').onclick=()=>{$('psRdvForm').hidden=!$('psRdvForm').hidden;};$('psRdvSearch').oninput=()=>searchClients();$('psRdvSave').onclick=save;}
 const side=$('merchantMode')?.querySelector('.ps642-sidebar, .ps-pc-sidebar, .ps-merchant-sidebar, .mc-sidebar');if(side&&!side.querySelector('.ps-rdv-sidebar')){const b=document.createElement('button');b.className='ps-rdv-sidebar';b.textContent='▦  Rendez-vous';b.onclick=open;side.append(b)}
 }
 async function garages(){if(!merchantToken)return;garageList=await api(merchantToken,'garages?select=id,nom,ville');const select=$('psRdvGarage');if(select){select.innerHTML=garageList.map(g=>'<option value="'+esc(g.id)+'">'+esc(g.nom||('Point S '+g.ville))+'</option>').join('');const current=garageList.find(g=>String(g.ville).toLowerCase()===currentGarage().toLowerCase());if(current)select.value=current.id}}
@@ -7789,11 +7788,7 @@ function showError(e){if($('psRdvList'))$('psRdvList').textContent='Impossible d
 let searchTimer;
 function searchClients(){clearTimeout(searchTimer);searchTimer=setTimeout(async()=>{const q=$('psRdvSearch')?.value.trim()||'';const out=$('psRdvResults');if(!out)return;out.replaceChildren();if(q.length<2)return;try{const rows=await api(merchantToken,'clients?select=id,prenom,nom,code_client&limit=30');clientRows=rows.filter(c=>([c.prenom,c.nom,c.code_client].join(' ').toLowerCase().includes(q.toLowerCase())));if(!clientRows.length){out.textContent='Aucun client trouvé parmi les fiches accessibles';return}clientRows.forEach(c=>{const b=document.createElement('button');b.textContent=[c.prenom,c.nom].filter(Boolean).join(' ')+' · '+(c.code_client||'');b.onclick=()=>{selected=c;$('psRdvSelected').hidden=false;$('psRdvSelected').textContent='Client : '+[c.prenom,c.nom].filter(Boolean).join(' ')+' · N° '+(c.code_client||'');out.replaceChildren()};out.append(b)})}catch(e){out.textContent='Recherche indisponible : '+e.message}},280)}
 async function save(){const message=$('psRdvMessage');if(!selected){message.textContent='Sélectionnez d’abord un client.';return}const date=$('psRdvDate').value,time=$('psRdvTime').value,service=$('psRdvService').value.trim(),duration=Number($('psRdvDuration').value);if(!date||!time||!service||!Number.isFinite(duration)||duration<15||duration>480){message.textContent='Renseignez la date, l’heure, la durée et la prestation.';return}const start=new Date(date+'T'+time+':00');if(!Number.isFinite(start.getTime())){message.textContent='Date invalide';return}const end=new Date(start.getTime()+duration*60000);const b=$('psRdvSave');b.disabled=true;message.textContent='Enregistrement sécurisé…';try{await api(merchantToken,'rpc/ps_creer_rendez_vous',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_client_id:selected.id,p_garage_id:$('psRdvGarage').value,p_debut:start.toISOString(),p_fin:end.toISOString(),p_prestation:service,p_note_interne:$('psRdvNote').value})});message.textContent='✓ Rendez-vous enregistré dans Supabase.';selected=null;$('psRdvSelected').hidden=true;$('psRdvSearch').value='';$('psRdvService').value='';$('psRdvNote').value='';await list()}catch(e){message.textContent='Échec : '+e.message}finally{b.disabled=false}}
-async function list(){if(!merchantToken||!$('psRdvList'))return;const rows=await api(merchantToken,'rendez_vous_fidelite?select=id,client_id,garage_id,debut,prestation,statut&debut=gte.'+encodeURIComponent(new Date().toISOString())+'&order=debut.asc&limit=80');const root=$('psRdvList');root.replaceChildren();if(!rows.length){root.textContent='Aucun rendez-vous à venir.';return}const clients=await api(merchantToken,'clients?select=id,prenom,nom&limit=1000');const map=new Map(clients.map(c=>[c.id,[c.prenom,c.nom].filter(Boolean).join(' ')]));const mobileView=window.matchMedia('(max-width:959px)').matches;
-const filterDate=mobileView?$('psRdvDayFilter')?.value:'';
-const visible=filterDate?rows.filter(r=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(r.debut))===filterDate):rows;
-if(!visible.length){root.textContent='Aucun rendez-vous pour cette date.';return}
-visible.forEach(r=>{if(mobileView){const el=document.createElement('article');el.className='ps-rdv-mobile-item';const when=new Date(r.debut);const hour=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(when);const date=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',weekday:'short',day:'numeric',month:'short'}).format(when);const g=garageList.find(g=>g.id===r.garage_id);el.innerHTML='<div class="ps-rdv-mobile-time"><b>'+esc(hour)+'</b><small>'+esc(date)+'</small></div><div class="ps-rdv-mobile-info"><strong>'+esc(map.get(r.client_id)||'Client')+'</strong><span>'+esc(r.prestation||'Prestation non précisée')+'</span><small>'+esc(g?.nom||g?.ville||'Garage')+'</small><em>'+esc(r.statut||'')+'</em></div>';root.append(el);return}const el=document.createElement('div');el.className='ps-rdv-list-item';el.innerHTML='<div><strong>'+esc(dayTime(r.debut))+' · '+esc(map.get(r.client_id)||'Client')+'</strong><small>'+esc(r.prestation)+' · '+esc(garageList.find(g=>g.id===r.garage_id)?.ville||'Garage')+'</small></div><span>'+esc(r.statut)+'</span>';root.append(el)})}
+async function list(){if(!merchantToken||!$('psRdvList'))return;const rows=await api(merchantToken,'rendez_vous_fidelite?select=id,client_id,garage_id,debut,prestation,statut&debut=gte.'+encodeURIComponent(new Date().toISOString())+'&order=debut.asc&limit=80');const root=$('psRdvList');root.replaceChildren();if(!rows.length){root.textContent='Aucun rendez-vous à venir.';return}const clients=await api(merchantToken,'clients?select=id,prenom,nom&limit=1000');const map=new Map(clients.map(c=>[c.id,[c.prenom,c.nom].filter(Boolean).join(' ')]));rows.forEach(r=>{const el=document.createElement('div');el.className='ps-rdv-list-item';el.innerHTML='<div><strong>'+esc(dayTime(r.debut))+' · '+esc(map.get(r.client_id)||'Client')+'</strong><small>'+esc(r.prestation)+' · '+esc(garageList.find(g=>g.id===r.garage_id)?.ville||'Garage')+'</small></div><span>'+esc(r.statut)+'</span>';root.append(el)})}
 function ics(r,g){const fmt=d=>new Date(d).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');const clean=s=>String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');const uid=r.id+'@points-fidelite';const body=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Groupe RNF//Point S Fidelite//FR','BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+fmt(new Date()),'DTSTART:'+fmt(r.debut),'DTEND:'+fmt(r.fin),'SUMMARY:'+clean('Rendez-vous Point S - '+r.prestation),'LOCATION:'+clean(g),'DESCRIPTION:'+clean(r.prestation),'END:VEVENT','END:VCALENDAR'].join('\r\n');const url=URL.createObjectURL(new Blob([body],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='rendez-vous-point-s.ics';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function clientGarageLabel(){
   // Source de vérité du choix client déjà utilisée par l'en-tête de l'application.
@@ -8074,35 +8069,84 @@ body.ps-client-authorized #clientHeaderClean .ch-garage span,body.ps-client-auth
  #merchantMode .mc-client-header .ps671-pin svg{display:block!important;width:24px!important;height:24px!important;stroke:currentColor!important;fill:none!important;stroke-width:1.9!important}
 }
 </style>
-<style id="rnf-v674-mobile-appointments">
-#merchantMode .ps-rdv-mobile-card,#merchantMode .ps-rdv-mobile-tools{display:none!important}
-@media(max-width:959px){
- #merchantMode #psPcHome .ps-pc-features .ps-rdv-mobile-card{display:flex!important;visibility:visible!important;opacity:1!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:12px!important;min-height:150px!important;text-align:center!important;border-radius:24px!important;background:#fff!important;border:1px solid #e1e9f5!important;color:#214678!important;cursor:pointer!important;font-family:inherit!important}
- #merchantMode #psPcHome .ps-pc-features .ps-rdv-mobile-card .ps-pc-icon{display:flex!important;align-items:center!important;justify-content:center!important;width:74px!important;height:74px!important;border-radius:22px!important;background:#e8f2ff!important;color:#1760a6!important}
- #merchantMode #psPcHome .ps-pc-features .ps-rdv-mobile-card b{font-size:20px!important;font-weight:800!important;line-height:1.2!important}
- #merchantMode #psPcHome .ps-pc-features .ps-rdv-mobile-card small{font-size:12px!important;color:#607899!important}
- #merchantMode #psPcHome .ps-pc-features .ps-rdv-home-card:not(.ps-rdv-mobile-card){display:none!important}
- #merchantMode #mc-appointments{padding:12px 0 90px!important}
- #merchantMode #mc-appointments .ps-rdv-wrap{width:100%!important;max-width:100%!important;padding:0 2px!important;box-sizing:border-box!important;font-family:inherit!important}
- #merchantMode #mc-appointments .ps-rdv-heading{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px!important;margin:8px 0 18px!important}
- #merchantMode #mc-appointments .ps-rdv-heading h2{font-size:27px!important;letter-spacing:-.6px!important;font-weight:800!important}
- #merchantMode #mc-appointments .ps-rdv-btn{width:100%!important;min-height:52px!important;border-radius:16px!important;font:800 16px/1.2 inherit!important}
- #merchantMode #mc-appointments .ps-rdv-panel{border-radius:22px!important;padding:18px 15px!important;margin:0 0 16px!important;box-sizing:border-box!important;max-width:100%!important;overflow:hidden!important}
+
+<style id="rnf-v675-merchant-appointments-mobile-only">
+@media screen and (max-width:959px){
+ #merchantMode #mc-dashboard .mc-validated-cards .ps-v675-rdv-card{display:flex!important;visibility:visible!important;}
+ #merchantMode #mc-appointments .ps-rdv-wrap{width:100%!important;max-width:100%!important;padding:12px 14px 30px!important;box-sizing:border-box!important;font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif!important}
+ #merchantMode #mc-appointments .ps-rdv-heading{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;margin:0 0 14px!important}
+ #merchantMode #mc-appointments .ps-rdv-heading h2{font-size:23px!important;letter-spacing:-.4px!important;margin:0!important;color:#124a8b!important}
+ #merchantMode #mc-appointments .ps-rdv-heading #psRdvNew{width:100%!important;min-height:48px!important;border-radius:13px!important;font:800 14px ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif!important}
+ #merchantMode #mc-appointments .ps-rdv-panel{width:100%!important;max-width:100%!important;box-sizing:border-box!important;padding:15px!important;border-radius:17px!important;margin:0 0 14px!important}
  #merchantMode #mc-appointments .ps-rdv-row{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
- #merchantMode #mc-appointments .ps-rdv-field input,#merchantMode #mc-appointments .ps-rdv-field select,#merchantMode #mc-appointments .ps-rdv-field textarea{max-width:100%!important;width:100%!important;box-sizing:border-box!important;font-size:16px!important}
- #merchantMode #mc-appointments .ps-rdv-mobile-tools{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 18px}
- #merchantMode #mc-appointments .ps-rdv-mobile-tools label{width:100%;font-weight:800;font-size:15px}
- #merchantMode #mc-appointments .ps-rdv-mobile-tools input{flex:1;min-width:140px;min-height:46px;border:1px solid #dce6f3;border-radius:13px;padding:8px;color:#194b87;font-size:16px;background:#fff}
- #merchantMode #mc-appointments .ps-rdv-mobile-tools button{border:1px solid #dce6f3;border-radius:13px;background:#edf4ff;color:#195399;padding:12px;font-weight:700;font-family:inherit}
- #merchantMode #mc-appointments .ps-rdv-mobile-item{display:flex;gap:12px;align-items:flex-start;padding:15px 4px;border-bottom:1px solid #e5edf7}
- #merchantMode #mc-appointments .ps-rdv-mobile-time{flex:0 0 82px;border-radius:14px;background:#eaf3ff;color:#15539c;padding:12px 5px;text-align:center;display:flex;flex-direction:column;gap:5px}
- #merchantMode #mc-appointments .ps-rdv-mobile-time b{font-size:19px;font-weight:800}
- #merchantMode #mc-appointments .ps-rdv-mobile-time small{font-size:11px}
- #merchantMode #mc-appointments .ps-rdv-mobile-info{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1;overflow-wrap:anywhere}
- #merchantMode #mc-appointments .ps-rdv-mobile-info strong{font-size:15px;color:#174580}
- #merchantMode #mc-appointments .ps-rdv-mobile-info span{font-size:13px;color:#667a93}
- #merchantMode #mc-appointments .ps-rdv-mobile-info small{font-size:12px;color:#225d9a}
- #merchantMode #mc-appointments .ps-rdv-mobile-info em{align-self:flex-start;background:#eaf8ed;color:#278b4d;padding:5px 9px;border-radius:20px;font-style:normal;font-weight:700;font-size:11px}
+ #merchantMode #mc-appointments .ps-rdv-field input,#merchantMode #mc-appointments .ps-rdv-field select,#merchantMode #mc-appointments .ps-rdv-field textarea{width:100%!important;max-width:100%!important;box-sizing:border-box!important;font:500 16px ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif!important}
+ #merchantMode #mc-appointments #psRdvList{display:grid!important;gap:10px!important}
+ #merchantMode #mc-appointments .ps-rdv-list-item{display:flex!important;align-items:center!important;gap:12px!important;padding:13px!important;border:1px solid #e0e9f5!important;border-radius:14px!important;background:#fff!important;box-sizing:border-box!important;min-width:0!important}
+ #merchantMode #mc-appointments .ps-rdv-list-item>div{flex:1!important;min-width:0!important}
+ #merchantMode #mc-appointments .ps-rdv-list-item strong{display:block!important;font-size:14px!important;line-height:1.4!important;white-space:normal!important;overflow-wrap:anywhere!important;color:#154c8d!important}
+ #merchantMode #mc-appointments .ps-rdv-list-item small{display:block!important;font-size:12px!important;line-height:1.5!important;white-space:normal!important;overflow-wrap:anywhere!important;color:#526b88!important}
+ #merchantMode #mc-appointments .ps-rdv-list-item>span{flex:none!important;border-radius:8px!important;background:#e7f7ee!important;color:#167548!important;padding:5px 8px!important;font-size:11px!important;font-weight:750!important}
+ #merchantMode #mc-appointments .ps-v675-datebar{display:flex!important;align-items:center!important;gap:9px!important;margin:8px 0 13px!important}
+ #merchantMode #mc-appointments .ps-v675-datebar label{font-size:13px!important;font-weight:750!important;color:#174c89!important}
+ #merchantMode #mc-appointments .ps-v675-datebar input{flex:1!important;min-width:0!important;max-width:190px!important;padding:9px!important;border:1px solid #dce7f4!important;border-radius:10px!important;font-size:15px!important;background:white!important;color:#174c89!important}
+ #merchantMode #mc-appointments .ps-v675-datebar button{border:0!important;background:#eaf2fc!important;color:#174c89!important;border-radius:9px!important;padding:10px!important;font-weight:700!important}
+ #merchantMode #mc-appointments .ps-v675-empty{font-size:13px!important;color:#637992!important;padding:12px!important;text-align:center!important}
 }
+@media screen and (min-width:960px){#merchantMode .ps-v675-rdv-card,#merchantMode .ps-v675-datebar,#merchantMode .ps-v675-empty{display:none!important}}
 </style>
+
+<script id="rnf-v675-merchant-appointments-mobile-only-js">
+(function(){'use strict';
+const mq=window.matchMedia('(max-width:959px)');
+const icon='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15l2.5 2.5L16 12"/></svg>';
+function mount(){
+ if(!mq.matches)return;
+ const root=document.querySelector('#merchantMode #mc-dashboard .mc-validated-cards');
+ if(root&&!root.querySelector('.ps-v675-rdv-card')){
+  const b=document.createElement('button');b.type='button';b.className='mc-quick ps-v675-rdv-card';
+  b.innerHTML='<span class="mc-visual-icon">'+icon+'</span><span class="mc-visual-copy"><b>Rendez-vous</b><small>Planifier et gérer les rendez-vous</small></span><span class="mc-visual-chevron">›</span>';
+  b.addEventListener('click',()=>{
+   const existing=document.querySelector('#psPcHome .ps-rdv-home-card');
+   if(existing){existing.click();return;}
+   const view=document.getElementById('mc-appointments');
+   if(view&&typeof window.merchantView==='function'){window.merchantView('appointments');return;}
+   alert('La gestion des rendez-vous est en cours de chargement. Réessayez dans un instant.');
+  });
+  root.appendChild(b);
+ }
+ const list=document.getElementById('psRdvList');
+ const panel=list?.closest('.ps-rdv-panel');
+ if(panel&&!panel.querySelector('.ps-v675-datebar')){
+  const bar=document.createElement('div');bar.className='ps-v675-datebar';
+  bar.innerHTML='<label for="psV675RdvDate">Date</label><input id="psV675RdvDate" type="date" aria-label="Filtrer les rendez-vous par date"><button type="button" id="psV675RdvReset">Tous</button>';
+  list.before(bar);
+  bar.querySelector('input').addEventListener('change',filter);
+  bar.querySelector('button').addEventListener('click',()=>{bar.querySelector('input').value='';filter()});
+ }
+ if(list&&!list.dataset.psV675Observed){
+  list.dataset.psV675Observed='1';
+  new MutationObserver(()=>{if(mq.matches)filter()}).observe(list,{childList:true});
+ }
+}
+const months={janv:1,févr:2,fevr:2,mars:3,avr:4,mai:5,juin:6,juil:7,août:8,aout:8,sept:9,oct:10,nov:11,déc:12,dec:12};
+function dateKey(label){
+ const m=String(label).toLowerCase().match(/(\d{1,2})\s+([a-zéûôîàèê]+)\.?\s+(\d{4})/);
+ if(!m)return '';
+ const month=months[m[2].slice(0,4)]||months[m[2].slice(0,3)];
+ return month?m[3]+'-'+String(month).padStart(2,'0')+'-'+m[1].padStart(2,'0'):'';
+}
+function filter(){
+ const list=document.getElementById('psRdvList'),input=document.getElementById('psV675RdvDate');
+ if(!list||!input)return;
+ const rows=[...list.querySelectorAll('.ps-rdv-list-item')];let visible=0;
+ rows.forEach(row=>{const key=dateKey(row.querySelector('strong')?.textContent||'');const show=!input.value||key===input.value;row.style.setProperty('display',show?'flex':'none','important');if(show)visible++});
+ let empty=document.getElementById('psV675NoMatches');
+ if(input.value&&rows.length&&!visible){if(!empty){empty=document.createElement('div');empty.id='psV675NoMatches';empty.className='ps-v675-empty';empty.textContent='Aucun rendez-vous pour cette date.';list.after(empty)}}
+ else empty?.remove();
+}
+let scheduled=false;
+new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;mount()})}).observe(document.documentElement,{subtree:true,childList:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+})();
+</script>
 </body></html>
