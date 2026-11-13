@@ -4180,6 +4180,27 @@ function merchantFilterClients(){const q=(document.getElementById('mclSearch')?.
  window.cmpBack=function(){digits=digits.slice(0,-1)||'0';update()};
  window.confirmClientManualPoints=function(){
    const amount=Math.max(0,parseInt(digits,10)||0);if(!amount)return;
+   // PC : aucun solde ni historique simulé. Utiliser exclusivement la RPC sécurisée existante.
+   if(window.innerWidth>=960){
+     const btn=document.querySelector('#clientManualPointsModal .cmp-confirm');
+     const view=document.getElementById('mc-clientdetail');
+     const code=(view?.querySelector('#psClientCode')?.value||view?.querySelector('.ps-code-line')?.textContent||'').match(/\b\d{6}\b/)?.[0];
+     if(!code){alert('Code client indisponible. Revenez à la liste Clients et ouvrez à nouveau sa fiche.');return;}
+     if(typeof window.psDesktopFindClient!=='function'){alert('Gestion fidélité sécurisée indisponible. Aucun point ajouté.');return;}
+     if(btn)btn.disabled=true;
+     window.psDesktopFindClient(code).then(()=>{
+       const input=document.getElementById('psRpcPoints');
+       const native=document.getElementById('psRpcAdd');
+       if(!input||!native||native.disabled)throw Error('Action Supabase indisponible');
+       input.value=String(amount);
+       closeClientManualPoints();
+       native.click(); // La RPC ps_ajouter_points confirme ou refuse l'opération.
+     }).catch(err=>{alert('Aucun point ajouté : '+(err.message||'erreur de connexion'));})
+       .finally(()=>{if(btn)btn.disabled=false;});
+     return;
+   }
+   // Parcours mobile historique inchangé ; aucune modification des écrans mobiles.
+
    const view=document.getElementById('mc-clientdetail');
    const bal=view?.querySelector('#mcBalance');
    const old=parseInt((bal?.textContent||'0').replace(/\D/g,''),10)||0;
