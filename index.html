@@ -5116,6 +5116,21 @@ async function restoreSessionAfterRefresh(){
 }
 // Refuser l'accès sans session, y compris lorsqu'un ancien état de démo est enregistré.
 sessionStorage.removeItem('pointsS_demo_session');sessionStorage.removeItem('pointsS_auth_mode');
+// Masquer le formulaire de connexion pendant la restauration de la session.
+// L'overlay n'autorise aucun accès : le MFA et les contrôles Supabase restent obligatoires.
+(function(){
+  var mask=document.createElement('div');mask.id='psV677SessionWait';mask.setAttribute('role','status');
+  mask.innerHTML='<span class="ps-v677-spinner" aria-hidden="true"></span><strong>Point S Fidélité</strong><small>Ouverture de votre espace…</small>';
+  document.body.appendChild(mask);
+  function dismiss(){mask.remove();clearInterval(watcher)}
+  window.addEventListener('ps-auth-session',dismiss,{once:true});
+  var watcher=setInterval(function(){
+    var merchant=el('psMerchantMfa'),client=el('psClientMfa'),login=el('authLogin');
+    if((merchant&&!merchant.hidden)||(client&&!client.hidden))dismiss();
+    else if(!sessionStorage.getItem('ps_v659_refresh_token')&&login&&!login.hidden)dismiss();
+  },180);
+  setTimeout(dismiss,12000);
+})();
 showLogin();
 // Laisser l'animation Point S visible avant l'ecran de connexion.
 setTimeout(function(){initialSplashPending=false;restoreSessionAfterRefresh();},2200);
@@ -8200,6 +8215,48 @@ const panel=list.closest('.ps-rdv-panel');if(panel&&!$('ps676Cal')){const header
 const newBtn=$('psRdvNew');if(newBtn&&!newBtn.dataset.ps676){newBtn.dataset.ps676='1';newBtn.addEventListener('click',()=>{if(!form.hidden){form.scrollIntoView({behavior:'smooth',block:'start'});$('psRdvSearch')?.focus({preventScroll:true})}})}
 }
 let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;mount()})}).observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+})();
+</script>
+
+<style id="ps-v677-ux-css">
+#psV677SessionWait{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;background:#f6f9fe;color:#124b89;font-family:inherit;text-align:center}
+#psV677SessionWait strong{font-size:23px;font-weight:800}#psV677SessionWait small{font-size:14px;color:#6c8098}
+.ps-v677-spinner{height:36px;width:36px;border:3px solid #dbeafc;border-top-color:#0755a3;border-radius:50%;animation:psV677Spin .85s linear infinite}
+@keyframes psV677Spin{to{transform:rotate(360deg)}}
+#psV677RdvToast{position:fixed;z-index:2147482000;top:max(20px,env(safe-area-inset-top));left:14px;right:14px;max-width:440px;margin:auto;background:#fff;border:1px solid #dbe8f7;border-left:4px solid #19b85c;border-radius:17px;box-shadow:0 12px 36px #153c6840;padding:15px;display:flex;align-items:center;gap:12px;color:#104984;font-family:inherit;animation:psV677Enter .4s ease both}
+#psV677RdvToast[hidden]{display:none!important}#psV677RdvToast .ps-v677-symbol{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:#e7f6ec;color:#159d4d;font-size:23px}
+#psV677RdvToast .ps-v677-copy{flex:1;min-width:0}#psV677RdvToast strong{display:block;font-size:15px}#psV677RdvToast small{display:block;font-size:12px;color:#63758a;margin-top:4px;line-height:1.35}
+#psV677RdvToast button{border:0;background:#eaf3ff;color:#0755a3;border-radius:10px;padding:9px;font:inherit;font-size:12px;font-weight:700}
+@keyframes psV677Enter{from{opacity:0;transform:translateY(-22px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#psV677RdvToast,.ps-v677-spinner{animation:none!important}}
+</style>
+<script id="ps-v677-rdv-live-js">
+(function(){'use strict';
+// La lecture passe par le RPC existant qui vérifie auth.uid() et client_mfa_verified().
+var SB='https://lsffbioatihkjtiutgma.supabase.co',KEY='sb_publishable_Bx6iHefBbFc7dHy3CwEvmA_oLfVM36r';
+var token=null,knownId=null,initialized=false,interval=null,requestId=0,closeTimer=null;
+function toast(r){
+  var el=document.getElementById('psV677RdvToast');
+  if(!el){el=document.createElement('div');el.id='psV677RdvToast';el.hidden=true;el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.appendChild(el)}
+  el.replaceChildren();var icon=document.createElement('span');icon.className='ps-v677-symbol';icon.textContent='✓';
+  var copy=document.createElement('span');copy.className='ps-v677-copy';var title=document.createElement('strong');title.textContent='Nouveau rendez-vous confirmé';
+  var detail=document.createElement('small');var date=new Date(r.debut);detail.textContent=(r.garage_nom||'Votre garage')+' · '+new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Paris'}).format(date);
+  copy.append(title,detail);var close=document.createElement('button');close.type='button';close.textContent='Fermer';close.onclick=function(){el.hidden=true};el.append(icon,copy,close);el.hidden=false;
+  clearTimeout(closeTimer);closeTimer=setTimeout(function(){el.hidden=true},6500);
+  window.dispatchEvent(new Event('ps-card-flipped')); // actualiser les données du verso sans retourner la carte
+}
+async function check(){
+  if(!token||document.hidden)return;var current=requestId,t=token;
+  try{var response=await fetch(SB+'/rest/v1/rpc/ps_mon_prochain_rendez_vous',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'},body:'{}',cache:'no-store'});
+    if(!response.ok)throw Error('RPC '+response.status);var rows=await response.json();if(current!==requestId||t!==token||!Array.isArray(rows))return;
+    var r=rows[0]||null,id=r?.id||null;
+    if(!initialized){knownId=id;initialized=true;return}if(id&&id!==knownId){knownId=id;toast(r)}else{knownId=id}
+  }catch(err){console.warn('Surveillance rendez-vous :',err.message)}
+}
+window.addEventListener('ps-auth-session',function(e){requestId++;clearInterval(interval);token=e.detail?.token&&!e.detail?.merchant?e.detail.token:null;knownId=null;initialized=false;
+  document.getElementById('psV677RdvToast')?.setAttribute('hidden','');if(token){check();interval=setInterval(check,12000)}
+});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)check()});
 })();
 </script>
 </body></html>
