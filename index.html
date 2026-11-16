@@ -7914,7 +7914,7 @@ async function renderClient(){
     const get=t=>parts.find(p=>p.type===t)?.value||'';
     const hour=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(date);
     const g=r.garage_nom||clientGarageLabel()||'Votre garage';
-    back.innerHTML='<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> Mon prochain rendez-vous</h3><div class="ps-rdv-white ps-rdv-v665"><div class="ps-rdv-top"><div class="ps-rdv-day">'+esc(get('weekday'))+'<b>'+esc(get('day'))+'</b><span class="ps-rdv-month">'+esc(get('month').replace(/\.$/,'').toLocaleUpperCase('fr-FR')+'.')+'</span></div><span class="ps-rdv-separator" aria-hidden="true"></span><div class="ps-rdv-when-where"><div class="ps-rdv-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><span>'+esc(hour)+'</span></div><div class="ps-rdv-garage"><div class="ps-rdv-garage-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+esc(g)+'</span></div><div class="ps-rdv-status">✓ Confirmé par le garage</div></div></div></div><div class="ps-rdv-service"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16 3 15v-4l2-5h14l2 5v4l-2 1M5 16h14M5 16v3M19 16v3M3 11h18"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/></svg><span>'+esc(r.prestation||'Prestation non précisée')+'</span></div><button type="button" class="ps-rdv-calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> Ajouter à mon calendrier</button></div>';
+    back.innerHTML='<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> Mon prochain rendez-vous</h3><div class="ps-rdv-white ps-rdv-v665"><div class="ps-rdv-top"><div class="ps-rdv-day">'+esc(get('weekday'))+'<b>'+esc(get('day'))+'</b><span class="ps-rdv-month">'+esc(get('month').replace(/\.$/,'').toLocaleUpperCase('fr-FR')+'.')+'</span></div><span class="ps-rdv-separator" aria-hidden="true"></span><div class="ps-rdv-when-where"><div class="ps-rdv-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><span>'+esc(hour)+'</span></div><div class="ps-rdv-garage"><div class="ps-rdv-garage-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+esc(g)+'</span></div></div><div class="ps-rdv-status"><span class="ps-rdv-status-check" aria-hidden="true">✓</span><span>Confirmé</span></div></div></div><div class="ps-rdv-service"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16 3 15v-4l2-5h14l2 5v4l-2 1M5 16h14M5 16v3M19 16v3M3 11h18"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/></svg><span>'+esc(r.prestation||'Prestation non précisée')+'</span></div><button type="button" class="ps-rdv-calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> Ajouter à mon calendrier</button></div>';
     back.querySelector('.ps-rdv-calendar').onclick=e=>{e.preventDefault();e.stopPropagation();ics(r,g)};
   }catch(e){
     if(serial!==rdvRequestSerial||token!==clientToken)return;
@@ -8523,4 +8523,73 @@ let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',update,{once:true});else update();
 })();
 </script>
+
+<style id="rnf-v686-rdv-approved-separators">
+/* Deux traits validés : uniquement sur le verso de la carte RDV client. */
+#psFlipBack.ps-rdv-back:has(.ps-rdv-v665) > h3 > svg {
+  box-sizing:content-box!important;
+  padding-right:10px!important;
+  margin-right:2px!important;
+  border-right:3px solid #09B82E!important;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-service > img.ps-v684-car,
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-service > svg {
+  box-sizing:content-box!important;
+  padding-right:10px!important;
+  margin-right:1px!important;
+  border-right:2px solid #0B3D9D!important;
+}
+</style>
+
+<style id="rnf-v687-typographie-confirmation">
+/* Ajustements limités au verso client : typographie et badge de confirmation. */
+#psFlipBack.ps-rdv-back:has(.ps-rdv-v665),
+#psFlipBack.ps-rdv-back:has(.ps-rdv-v665) > h3,
+#psFlipBack.ps-rdv-back .ps-rdv-v665,
+#psFlipBack.ps-rdv-back .ps-rdv-v665 button {
+  font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-when-where {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto auto;
+  align-content:center;
+  align-items:center;
+  column-gap:5px;
+  row-gap:8px;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-time {
+  grid-column:1;grid-row:1;min-width:0;
+  font-weight:850!important;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-garage {
+  grid-column:1/-1;grid-row:2;min-width:0;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-status {
+  grid-column:2;grid-row:1;justify-self:end;
+  display:inline-flex!important;align-items:center;justify-content:center;
+  gap:4px;width:auto!important;max-width:100%;
+  background:#e5f8eb!important;color:#087b35!important;
+  border-radius:999px!important;
+  padding:4px 6px!important;
+  font-size:clamp(9px,2.5vw,11px)!important;
+  line-height:1.1!important;font-weight:850!important;
+  white-space:nowrap!important;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-status-check {
+  display:inline-grid;place-items:center;flex:none;
+  width:15px;height:15px;border-radius:50%;
+  background:#09b82e;color:white;font-size:11px;font-weight:900;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-garage-name {
+  font-weight:750!important;
+}
+#psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-service {
+  font-weight:750!important;
+}
+@media(max-width:370px){
+  #psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-status{font-size:9px!important;padding:3px 4px!important;gap:3px}
+  #psFlipBack.ps-rdv-back .ps-rdv-v665 .ps-rdv-status-check{width:13px;height:13px;font-size:10px}
+}
+</style>
 </body></html>
