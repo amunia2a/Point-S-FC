@@ -8149,4 +8149,57 @@ new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFra
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();
 </script>
+
+<style id="ps-v676-mobile-rdv-design">
+@media(max-width:959px){
+#merchantMode #mc-appointments .ps-rdv-wrap{padding:12px 14px 100px!important}
+#merchantMode #mc-appointments .ps-rdv-heading{display:flex!important;align-items:center!important;gap:10px!important;margin-bottom:15px!important}
+#merchantMode #mc-appointments .ps-rdv-heading h2{font-size:25px!important}
+#merchantMode #mc-appointments .ps-rdv-heading #psRdvNew{width:auto!important;margin-left:auto!important;padding:11px 13px!important;font-size:12px!important;min-height:42px!important}
+#merchantMode #mc-appointments .ps-rdv-panel{padding:15px!important;border-radius:17px!important}
+#merchantMode #mc-appointments .ps-rdv-panel h3{font-size:18px!important;color:#174c89!important}
+#merchantMode #mc-appointments #psRdvForm[hidden]{display:none!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-row{display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)!important;gap:9px!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-row:nth-of-type(2){grid-template-columns:1fr!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field{position:relative!important;min-width:0!important;gap:7px!important;margin-bottom:15px!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field label{font-size:13px!important;color:#14549b!important;font-weight:800!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field input,#merchantMode #mc-appointments #psRdvForm .ps-rdv-field select,#merchantMode #mc-appointments #psRdvForm .ps-rdv-field textarea{min-height:48px!important;border:1px solid #b9cfee!important;border-radius:12px!important;background:#fff!important;color:#183d74!important;font-size:16px!important;padding:11px 10px 11px 44px!important;box-shadow:none!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field textarea{min-height:82px!important;resize:vertical!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field .ps676-field-icon{position:absolute!important;top:35px!important;left:12px!important;display:flex!important;width:22px!important;height:22px!important;align-items:center!important;justify-content:center!important;color:#14549b!important;pointer-events:none!important}
+#merchantMode #mc-appointments #psRdvForm .ps-rdv-field .ps676-field-icon svg{width:21px!important;height:21px!important;stroke:currentColor!important;stroke-width:1.8!important;fill:none!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+#merchantMode #mc-appointments #psRdvForm #psRdvSave{display:block!important;width:100%!important;min-height:51px!important;border-radius:13px!important;font-size:15px!important}
+#merchantMode #mc-appointments #psRdvForm .ps676-note-toggle{border:0!important;background:transparent!important;color:#17549b!important;font:700 13px ui-rounded,system-ui,sans-serif!important;padding:7px 0 12px!important;text-align:left!important}
+#merchantMode #mc-appointments #psRdvForm .ps676-note-field[hidden]{display:none!important}
+#merchantMode #mc-appointments .ps-v675-datebar{display:none!important}
+#merchantMode #mc-appointments .ps676-calendar{display:flex!important;gap:7px!important;overflow-x:auto!important;padding:2px 1px 12px!important;scrollbar-width:none!important;overscroll-behavior-x:contain!important}
+#merchantMode #mc-appointments .ps676-calendar::-webkit-scrollbar{display:none!important}
+#merchantMode #mc-appointments .ps676-day{flex:0 0 58px!important;min-height:68px!important;border:1px solid #dce7f6!important;background:#fff!important;color:#194d8e!important;border-radius:13px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;font:700 13px ui-rounded,system-ui,sans-serif!important;cursor:pointer!important}
+#merchantMode #mc-appointments .ps676-day strong{font-size:20px!important}
+#merchantMode #mc-appointments .ps676-day[aria-pressed=true]{background:#0755a3!important;color:#fff!important;border-color:#0755a3!important}
+#merchantMode #mc-appointments .ps676-cal-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin-bottom:10px!important}
+#merchantMode #mc-appointments .ps676-cal-head button{border:1px solid #dce7f6!important;border-radius:10px!important;background:#f2f7ff!important;color:#14549b!important;padding:8px 12px!important;font-weight:800!important}
+#merchantMode #mc-appointments .ps676-cal-head span{color:#174c89!important;font-weight:800!important;font-size:14px!important}
+#merchantMode #mc-appointments .ps-rdv-list-item{margin-bottom:8px!important}
+}
+@media(min-width:960px){#merchantMode #mc-appointments .ps676-calendar,#merchantMode #mc-appointments .ps676-cal-head,#merchantMode #mc-appointments .ps676-field-icon,#merchantMode #mc-appointments .ps676-note-toggle{display:none!important}}
+</style>
+
+<script id="ps-v676-mobile-rdv-design-js">
+(()=>{'use strict';
+const media=window.matchMedia('(max-width:959px)');
+const $=id=>document.getElementById(id);
+const paths={psRdvSearch:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 10a3 3 0 0 1 0 6M18 17c2 0 3 1 3 3"/>',psRdvDate:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>',psRdvTime:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',psRdvDuration:'<circle cx="12" cy="13" r="8"/><path d="M12 9v5M9 2h6M12 5V3"/>',psRdvGarage:'<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',psRdvService:'<path d="M5 11 7 5h10l2 6M4 11h16v8H4zM7 19v2M17 19v2"/><circle cx="7.5" cy="15" r="1"/><circle cx="16.5" cy="15" r="1"/>',psRdvNote:'<path d="M4 20l4-.8L20 7l-3-3L5 16zM15 6l3 3"/>'};
+const daynames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+let offset=0, chosen=fmt(new Date());
+function renderCal(){const bar=$('ps676Cal');if(!bar)return;const today=new Date();today.setHours(12,0,0,0);const head=$('ps676CalTitle');if(head)head.textContent=offset===0?'Cette semaine':new Date(today.getTime()+offset*7*86400000).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});bar.replaceChildren();for(let i=0;i<7;i++){const d=new Date(today);d.setDate(d.getDate()+offset*7+i);const key=fmt(d),b=document.createElement('button');b.type='button';b.className='ps676-day';b.setAttribute('aria-pressed',String(chosen===key));b.innerHTML='<span>'+daynames[d.getDay()]+'</span><strong>'+d.getDate()+'</strong>';b.onclick=()=>{chosen=key;const input=$('psV675RdvDate');if(input){input.value=key;input.dispatchEvent(new Event('change',{bubbles:true}))}renderCal()};bar.appendChild(b)}}
+function mount(){if(!media.matches)return;const form=$('psRdvForm'),list=$('psRdvList');if(!form||!list)return;
+for(const [id,path] of Object.entries(paths)){const field=$(id)?.closest('.ps-rdv-field');if(field&&!field.querySelector('.ps676-field-icon')){const ic=document.createElement('span');ic.className='ps676-field-icon';ic.setAttribute('aria-hidden','true');ic.innerHTML='<svg viewBox="0 0 24 24">'+path+'</svg>';field.appendChild(ic)}}
+const note=$('psRdvNote')?.closest('.ps-rdv-field');if(note&&!note.classList.contains('ps676-note-field')){note.classList.add('ps676-note-field');note.hidden=true;const toggle=document.createElement('button');toggle.type='button';toggle.className='ps676-note-toggle';toggle.textContent='+ Ajouter une note interne (facultatif)';toggle.onclick=()=>{note.hidden=!note.hidden;toggle.textContent=note.hidden?'+ Ajouter une note interne (facultatif)':'− Masquer la note interne'};note.before(toggle)}
+const panel=list.closest('.ps-rdv-panel');if(panel&&!$('ps676Cal')){const header=document.createElement('div');header.className='ps676-cal-head';header.innerHTML='<button type="button" id="ps676Prev" aria-label="Semaine précédente">‹</button><span id="ps676CalTitle">Cette semaine</span><button type="button" id="ps676Next" aria-label="Semaine suivante">›</button>';const strip=document.createElement('div');strip.id='ps676Cal';strip.className='ps676-calendar';const h=panel.querySelector('h3');h?.after(header,strip);$('ps676Prev').onclick=()=>{offset--;renderCal()};$('ps676Next').onclick=()=>{offset++;renderCal()};renderCal();const input=$('psV675RdvDate');if(input){input.value=chosen;input.dispatchEvent(new Event('change',{bubbles:true}))}}
+const newBtn=$('psRdvNew');if(newBtn&&!newBtn.dataset.ps676){newBtn.dataset.ps676='1';newBtn.addEventListener('click',()=>{if(!form.hidden){form.scrollIntoView({behavior:'smooth',block:'start'});$('psRdvSearch')?.focus({preventScroll:true})}})}
+}
+let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;mount()})}).observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+})();
+</script>
 </body></html>
