@@ -7933,7 +7933,12 @@ async function list(){
  const available=new Set(rows.map(r=>dateKey(new Date(r.debut))));
  if(!state.anchor)state.anchor=todayKey;
  const calendar=document.createElement('div');calendar.className='ps-v691-calendar';
- const monthHeading=document.createElement('div');monthHeading.className='ps-v692-planning-heading';const monthTitle=document.createElement('strong');monthTitle.textContent='Mon planning';monthHeading.append(monthTitle);const monthLabel=document.createElement('span');monthLabel.className='ps-v692-month';monthLabel.textContent=new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric',timeZone:'UTC'}).format(displayDay(state.anchor));monthHeading.append(monthLabel);calendar.append(monthHeading);
+ const monthHeading=document.createElement('div');monthHeading.className='ps-v692-planning-heading';const monthTitle=document.createElement('strong');monthTitle.textContent='Mon planning';monthHeading.append(monthTitle);const monthLabel=document.createElement('span');monthLabel.className='ps-v692-month';monthLabel.textContent=new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric',timeZone:'UTC'}).format(displayDay(state.anchor));const monthControls=document.createElement('div');monthControls.className='ps-v697-month-controls';
+ const monthBack=document.createElement('button');monthBack.type='button';monthBack.className='ps-v697-month-arrow';monthBack.textContent='‹';monthBack.setAttribute('aria-label','Mois précédent');
+ const monthNext=document.createElement('button');monthNext.type='button';monthNext.className='ps-v697-month-arrow';monthNext.textContent='›';monthNext.setAttribute('aria-label','Mois suivant');
+ const changeMonth=(step)=>{const d=displayDay(state.anchor);const target=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+step,1));state.anchor=target.toISOString().slice(0,10);state.day=null;list();};
+ monthBack.onclick=()=>changeMonth(-1);monthNext.onclick=()=>changeMonth(1);
+ monthControls.append(monthBack,monthLabel,monthNext);monthHeading.append(monthControls);calendar.append(monthHeading);
  const rail=document.createElement('div');rail.className='ps-v691-rail';
  const backBtn=document.createElement('button');backBtn.type='button';backBtn.className='ps-v691-arrow';backBtn.textContent='‹';backBtn.setAttribute('aria-label','Jours précédents');
  backBtn.onclick=()=>{state.anchor=shiftDay(state.anchor,-7);list()};rail.append(backBtn);
@@ -8921,6 +8926,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #merchantMode.on #mc-appointments #psRdvForm .ps-rdv-field:has(#psRdvGarage) > label::before{content:"";display:inline-block;flex:none;width:15px;height:15px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230750aa%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2021V9l9-6%209%206v12M3%2010h18M7%2021v-8h10v8M9%2016h6%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;}
   #merchantMode.on #mc-appointments #psRdvForm .ps-rdv-field:has(#psRdvService) > label::before{content:"";display:inline-block;flex:none;width:15px;height:15px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230750aa%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.7%206.3a4%204%200%200%200-5%205L3%2018l3%203%206.7-6.7a4%204%200%200%200%205-5l-3%203-3-3z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;}
   #merchantMode.on #mc-appointments #psRdvForm .ps-rdv-field:has(#psRdvNote) > label::before{content:"";display:inline-block;flex:none;width:15px;height:15px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230750aa%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%204h16v13H9l-5%204V4z%22%2F%3E%3Cpath%20d%3D%22M8%209h8M8%2013h6%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;}
+}
+</style>
+
+<style id="ps-v697-month-arrows-title-only">
+@media screen and (min-width:960px){
+  html body #merchantMode.on #mc-appointments .ps-v692-planning-heading strong{font-size:19px!important;}
+  #merchantMode.on #mc-appointments .ps-v697-month-controls{display:flex;align-items:center;gap:9px;margin-left:auto;}
+  #merchantMode.on #mc-appointments .ps-v697-month-arrow{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid #d2e2f9;border-radius:50%;background:#fff;color:#0750aa;font-size:24px;line-height:1;cursor:pointer;}
+  #merchantMode.on #mc-appointments .ps-v697-month-arrow:hover{background:#eff6ff;}
+  #merchantMode.on #mc-appointments .ps-v697-month-arrow:focus-visible{outline:2px solid #0750aa;outline-offset:2px;}
 }
 </style>
 </body></html>
