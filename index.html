@@ -8825,4 +8825,21 @@ new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame((
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
 })();
 </script>
+
+<style id="ps-v693-desktop-rdv-grid-fix">
+/* Correction ciblée du layout PC Rendez-vous. Aucun changement sur mobile ni dans les données. */
+@media screen and (min-width:960px){
+ html body #merchantMode.on .mc-wrap{width:calc(100% - 80px)!important;max-width:1500px!important;min-width:0!important;box-sizing:border-box!important;margin-left:auto!important;margin-right:auto!important}
+ html body #merchantMode.on #mc-appointments.mc-view.active{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;float:none!important;clear:both!important}
+ html body #merchantMode.on #mc-appointments .ps-rdv-wrap{display:grid!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;grid-template-columns:minmax(0, 40fr) minmax(0, 60fr)!important;column-gap:18px!important;row-gap:0!important;align-items:start!important;padding:12px 0 40px!important;margin:0!important}
+ html body #merchantMode.on #mc-appointments .ps-rdv-heading{grid-column:1/-1!important;grid-row:1!important;margin:8px 0 18px!important;min-width:0!important}
+ html body #merchantMode.on #mc-appointments #psRdvForm{grid-column:1!important;grid-row:2!important;display:block!important;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;padding:22px!important}
+ html body #merchantMode.on #mc-appointments #psRdvForm[hidden]{display:none!important}
+ html body #merchantMode.on #mc-appointments .ps-rdv-wrap>.ps-rdv-panel:not(#psRdvForm){grid-column:2!important;grid-row:2!important;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;margin:0!important;padding:22px!important}
+ html body #merchantMode.on #mc-appointments #psRdvForm[hidden]~.ps-rdv-panel{grid-column:1/-1!important}
+ html body #merchantMode.on #mc-appointments #psRdvList{min-width:0!important;width:100%!important}
+ html body #merchantMode.on #mc-appointments .ps-v691-days{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;min-width:0!important}
+ html body #merchantMode.on #mc-appointments .ps-v691-rail{display:flex!important;min-width:0!important}
+}
+</style>
 </body></html>
