@@ -8011,7 +8011,7 @@ async function save(){const message=$('psRdvMessage');if(!selected){message.text
 async function list(){
  if(!merchantToken||!$('psRdvList'))return;
  const now=new Date();
- const rows=await api(merchantToken,'rendez_vous_fidelite?select=id,client_id,garage_id,debut,fin,prestation,statut&order=debut.desc&limit=500');
+ const rows=await api(merchantToken,'rendez_vous_fidelite?select=id,client_id,garage_id,debut,fin,prestation,note_interne,statut&order=debut.desc&limit=500');
  const root=$('psRdvList');root.replaceChildren();
  if(!window.psRdvCalendarState)window.psRdvCalendarState={mode:'all',day:null,anchor:null};
  const state=window.psRdvCalendarState;
@@ -8055,7 +8055,7 @@ async function list(){
  if(state.day){const reset=document.createElement('button');reset.type='button';reset.className='ps-v691-reset';reset.textContent='Afficher tous les jours ×';reset.onclick=()=>{state.day=null;list()};calendar.append(reset)}
  root.append(calendar);
  const results=document.createElement('div');results.className='ps-v691-results';root.append(results);
- const visible=rows.filter(r=>{const d=new Date(r.debut);return (state.mode==='all'||(state.mode==='cancelled'?['annule','annulé','cancelled','canceled'].includes(String(r.statut||'').toLowerCase()):state.mode==='future'?d>=now&&!['annule','annulé','cancelled','canceled'].includes(String(r.statut||'').toLowerCase()):d<now&&!['annule','annulé','cancelled','canceled'].includes(String(r.statut||'').toLowerCase())))&&(!state.day||dateKey(d)===state.day)}).sort((a,b)=>state.mode==='future'?new Date(a.debut)-new Date(b.debut):new Date(b.debut)-new Date(a.debut));
+ const visible=rows.filter(r=>{const d=new Date(r.debut);return (state.mode==='all'||(state.mode==='cancelled'?['annule','annulé','cancelled','canceled'].includes(String(r.statut||'').toLowerCase()):state.mode==='future'?d>=now&&r.statut==='confirme':r.statut==='termine'))&&(!state.day||dateKey(d)===state.day)}).sort((a,b)=>state.mode==='future'?new Date(a.debut)-new Date(b.debut):new Date(b.debut)-new Date(a.debut));
  if(!visible.length){const empty=document.createElement('p');empty.className='ps-v691-empty';empty.textContent=state.day?'Aucun rendez-vous pour ce jour.':state.mode==='future'?'Aucun rendez-vous à venir.':state.mode==='completed'?'Aucun rendez-vous terminé.':state.mode==='cancelled'?'Aucun rendez-vous annulé.':'Aucun rendez-vous.';results.append(empty);return;}
  const clients=await api(merchantToken,'clients?select=id,prenom,nom&limit=1000');
  const names=new Map(clients.map(c=>[c.id,[c.prenom,c.nom].filter(Boolean).join(' ')]));
@@ -8073,7 +8073,7 @@ async function list(){
    form.hidden=false;
    const parisDate=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'Europe/Paris'}).format(d);
    $('psRdvDate').value=parisDate;$('psRdvTime').value=hour;$('psRdvDuration').value=String(Math.max(15,Math.round((new Date(r.fin)-d)/60000)||60));
-   $('psRdvGarage').value=r.garage_id;$('psRdvService').value=r.prestation||'';
+   $('psRdvGarage').value=r.garage_id;$('psRdvGarage').disabled=true;$('psRdvService').value=r.prestation||'';$('psRdvNote').value=r.note_interne||'';
    $('psRdvSearch').value=names.get(r.client_id)||'';
    selected=r.client_id;
    const selectedEl=$('psRdvSelected');if(selectedEl){selectedEl.hidden=false;selectedEl.textContent=names.get(r.client_id)||'Client sélectionné'}
@@ -8085,8 +8085,9 @@ async function list(){
     if(!Number.isFinite(start.getTime())){message.textContent='Date invalide.';return}
     try{
      saveButton.disabled=true;
-     await api(merchantToken,'rendez_vous_fidelite?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({debut:start.toISOString(),fin:new Date(start.getTime()+duration*60000).toISOString(),garage_id:$('psRdvGarage').value,prestation:$('psRdvService').value.trim()})});
-     message.textContent='Rendez-vous modifié.';saveButton.textContent='Enregistrer le rendez-vous';saveButton.onclick=save;form.hidden=true;await list();
+     if($('psRdvGarage').value!==r.garage_id)throw Error('Le changement de garage n’est pas autorisé pendant la modification.');
+     await api(merchantToken,'rpc/ps_modifier_rendez_vous',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_rdv_id:r.id,p_debut:start.toISOString(),p_fin:new Date(start.getTime()+duration*60000).toISOString(),p_prestation:$('psRdvService').value.trim(),p_note_interne:$('psRdvNote').value})});
+     message.textContent='Rendez-vous modifié.';saveButton.textContent='Enregistrer le rendez-vous';saveButton.onclick=save;$('psRdvGarage').disabled=false;form.hidden=true;await list();
     }catch(err){message.textContent='Modification impossible : '+err.message}finally{saveButton.disabled=false}
    };
    form.scrollIntoView({behavior:'smooth',block:'start'});
@@ -8099,11 +8100,15 @@ async function list(){
   if(state.mode==='past'){const edit=actionArea?.querySelector('.ps-v684-edit');if(edit)content.append(edit);actionArea?.remove();results.append(el);return;}
   const originalEdit=actionArea?.querySelector('.ps-v684-edit');if(originalEdit){originalEdit.textContent='✎ Modifier';content.append(originalEdit)}
   const originalConfirm=actionArea?.querySelector('.ps-v684-confirm');if(originalConfirm){originalConfirm.textContent='✓ Confirmer';content.append(originalConfirm)}
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='danger';cancel.textContent='✕ Annuler';cancel.onclick=async()=>{if(!window.confirm('Annuler ce rendez-vous ?'))return;try{await api(merchantToken,'rendez_vous_fidelite?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({statut:'annule'})});await list()}catch(err){alert('Annulation impossible : '+err.message)}};content.append(cancel);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='danger';cancel.textContent='✕ Annuler';cancel.onclick=async()=>{if(!window.confirm('Annuler ce rendez-vous ?'))return;try{await api(merchantToken,'rpc/ps_modifier_rendez_vous',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_rdv_id:r.id,p_statut:'annule'})});await list()}catch(err){alert('Annulation impossible : '+err.message)}};content.append(cancel);
   
+  const finish=document.createElement('button');finish.type='button';finish.textContent='✓ Terminer';
+  if(r.statut==='termine'){finish.textContent='✓ Terminé';finish.disabled=true;}
+  else finish.onclick=async()=>{try{finish.disabled=true;await api(merchantToken,'rpc/ps_modifier_rendez_vous',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_rdv_id:r.id,p_statut:'termine'})});await list()}catch(err){finish.disabled=false;alert('Clôture impossible : '+err.message)}};
+  content.append(finish);
   const confirm=el.querySelector('.ps-v684-confirm');
   if(r.statut==='confirme'){confirm.textContent='✓ Confirmé';confirm.disabled=true}
-  else confirm.onclick=async()=>{try{confirm.disabled=true;await api(merchantToken,'rendez_vous_fidelite?id=eq.'+encodeURIComponent(r.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({statut:'confirme'})});await list()}catch(err){confirm.disabled=false;alert('Confirmation impossible : '+err.message)}};
+  else confirm.onclick=async()=>{try{confirm.disabled=true;await api(merchantToken,'rpc/ps_modifier_rendez_vous',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_rdv_id:r.id,p_statut:'confirme'})});await list()}catch(err){confirm.disabled=false;alert('Confirmation impossible : '+err.message)}};
   results.append(el);
  });
 }
